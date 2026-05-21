@@ -1920,6 +1920,7 @@ button {
 
 /* =========================
    HAMBURGER BUTTON
+   ========================= */
 .hamburger-btn {
   display: none;
   background: transparent;
@@ -1936,6 +1937,7 @@ button {
 
 /* =========================
    BACKDROP
+   ========================= */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -1946,6 +1948,7 @@ button {
 
 /* =========================
    MOBILE MENU
+   ========================= */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -1978,6 +1981,7 @@ button {
 
 /* =========================
    MOBILE STATS
+   ========================= */
 .mobile-stats {
   margin-top: 20px;
   padding: 16px;
@@ -1988,6 +1992,7 @@ button {
 
 /* =========================
    RESPONSIVE FIX
+   ========================= */
 @media (max-width: 768px) {
   .navbar-links,
   .navbar-stats {
@@ -1998,3 +2003,4 @@ button {
     padding: 0 16px;
   }
 }
+

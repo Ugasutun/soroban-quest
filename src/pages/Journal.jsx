@@ -98,7 +98,7 @@ export default function Journal() {
       {/* Timeline */}
       {Object.keys(groupedLog).length === 0 ? (
         <div className="card text-center p-12">
-          <div style={{ fontSize: "3rem", marginBottom: "1rem opacity: 0.3" }}>📖</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem", opacity: 0.3 }}>📖</div>
           <p className="text-secondary">No activities recorded yet. Start your first mission!</p>
         </div>
       ) : (

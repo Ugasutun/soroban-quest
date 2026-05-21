@@ -12,6 +12,8 @@ import { useokashi, TOAST_STATES } from "../systems/useokashi";
 import { createDebouncedValidator } from "../systems/liveValidator";
 import { useToast } from "../systems/ToastContext";
 import { MissionErrorBoundary } from "../components/ErrorBoundary";
+import CodeReplayPlayer from "../components/CodeReplayPlayer";
+import CodeRecorder from "../systems/codeRecorder";
 
 // ─── Monaco marker model name (must be consistent across calls) ──────────────
 const LIVE_MARKER_OWNER = "soroban-quest-live";
@@ -46,6 +48,11 @@ export default function MissionDetail() {
   const validatorRef = useRef(null);    // Debounced validator handle
 
   const { openInOkashi, toast } = useokashi();
+
+  // Compute replay & completion state
+  const progressState = loadProgress();
+  const isCompleted = progressState.completedMissions.includes(missionId);
+  const hasReplay = CodeRecorder.hasRecording(missionId);
 
   // --------------------------- Load Mission ---------------------------
   useEffect(() => {

@@ -42,7 +42,7 @@ export default function Campaigns() {
     return Math.floor(xp / 300) + 1;
   };
 
-  const currentLevel = getLevelFromXP(progress.totalXP);
+  const currentLevel = getLevelFromXP(progress.xp || 0);
 
   return (
     <div className="campaigns-page">
@@ -161,7 +161,7 @@ export default function Campaigns() {
                   >
                     <div className="mission-order">#{mission.order}</div>
                     <div className="mission-title">{mission.title}</div>
-                    <div className="mission-badge badge-{mission.difficulty}">
+                    <div className={`mission-badge badge-${mission.difficulty}`}>
                       {mission.difficulty}
                     </div>
                     {missionCompleted ? (

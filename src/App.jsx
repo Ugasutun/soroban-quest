@@ -1,11 +1,8 @@
 
 import React, { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { loadProgress, saveProgress } from "./systems/storage";
 import { updateStreak } from "./systems/gameEngine";
-
-import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -16,6 +13,7 @@ import Profile from "./pages/Profile";
 import Journal from "./pages/Journal";
 
 import Campaigns from "./pages/Campaigns";
+import SkillTree from "./pages/SkillTree";
 
 import Footer from "./components/Footer";
 import NotFound from "./pages/NotFound";
@@ -53,6 +51,7 @@ export default function App() {
               <Route path="/mission/:missionId" element={<MissionDetail />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/journal" element={<Journal />} />
+              <Route path="/skills" element={<SkillTree />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
