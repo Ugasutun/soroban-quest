@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 // Import the fixed custom layout definitions directly
 import "./Profile.css";
+import { useToast } from '../systems/ToastContext';
 
 import {
   loadProgress,
@@ -16,6 +17,7 @@ import { getAllMissions } from "../systems/missionLoader";
 import { avatars } from "../data/avatars";
 
 export default function Profile() {
+  const { showToast } = useToast();
   const [state, setState] = useState(loadProgress());
 
   // ✅ IMPORTANT: safe profile init
@@ -25,7 +27,6 @@ export default function Profile() {
   const [name, setName] = useState(profile.name || "");
   const [avatar, setAvatar] = useState(profile.avatar || "🛡️");
 
-  const [importStatus, setImportStatus] = useState("");
   const fileInputRef = useRef(null);
 
   const xpProgress = getXPProgress(state);
@@ -42,6 +43,9 @@ export default function Profile() {
     saveProfile(updated);
     setProfile(updated);
     setEditing(false);
+    
+    // Wire up success notification
+    showToast("Profile credentials synchronized!", "success");
   };
 
   const openEdit = () => {
@@ -53,8 +57,8 @@ export default function Profile() {
   /* ---------------- PROGRESS ACTIONS ---------------- */
   const handleExport = () => {
     exportProgress();
-    setImportStatus("✅ Progress exported!");
-    setTimeout(() => setImportStatus(""), 3000);
+    // Replaced local status state with unified system toast alerts
+    showToast("Progress configuration data exported!", "success");
   };
 
   const handleImport = async (e) => {
@@ -64,20 +68,17 @@ export default function Profile() {
     try {
       const newState = await importProgress(file);
       setState(newState);
-      setImportStatus("✅ Progress imported successfully!");
+      showToast("Progress state imported successfully!", "success");
     } catch {
-      setImportStatus("❌ Invalid file — could not import.");
+      showToast("Invalid data payload — backup corrupted.", "error");
     }
-
-    setTimeout(() => setImportStatus(""), 3000);
   };
 
   const handleReset = () => {
     if (window.confirm("Reset all progress? This cannot be undone.")) {
       const newState = resetProgress();
       setState(newState);
-      setImportStatus("🗑️ Progress reset.");
-      setTimeout(() => setImportStatus(""), 3000);
+      showToast("Pilot profile progress cache reset to defaults.", "warning");
     }
   };
 
@@ -247,10 +248,6 @@ export default function Profile() {
           onChange={handleImport}
         />
       </div>
-
-      {importStatus && (
-        <p className="mt-3 text-sm text-gray-400">{importStatus}</p>
-      )}
     </div>
   );
 }
