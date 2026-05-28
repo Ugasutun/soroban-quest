@@ -1,6 +1,23 @@
 import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+
+import React, { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { loadProgress, saveProgress } from "./systems/storage";
+import { updateStreak } from "./systems/gameEngine";
+
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import MissionMap from "./pages/MissionMap";
+import MissionDetail from "./pages/MissionDetail";
+import Profile from "./pages/Profile";
+
+import Journal from "./pages/Journal";
+
+import Campaigns from "./pages/Campaigns";
+import SkillTree from "./pages/SkillTree";
+
 import Footer from "./components/Footer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./systems/ToastContext";
@@ -20,6 +37,7 @@ const SkillTree = lazy(() => import("./pages/SkillTree"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export default function App() {
+
   useEffect(() => {
     const state = loadProgress();
     const newState = updateStreak(state);
@@ -27,6 +45,10 @@ export default function App() {
   }, []);
 
   const location = useLocation();
+
+  // useLocation gives us a stable key that changes on every navigation.
+  const location = useLocation();
+
 
   return (
     <ErrorBoundary>
@@ -46,6 +68,16 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/missions" element={<MissionMap />} />
+              <Route path="/campaigns" element={<Campaigns />} />
+              <Route path="/mission/:missionId" element={<MissionDetail />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/journal" element={<Journal />} />
+              <Route path="/skills" element={<SkillTree />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </main>
           <Footer />
         </div>
