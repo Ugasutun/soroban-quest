@@ -2004,3 +2004,40 @@ button {
   }
 }
 
+/* ==========================================
+   GLOBAL ACCESSIBILITY & KEYBOARD FOCUS STYLES (#102)
+   ========================================== */
+
+/* High contrast outline rings only targeting active keyboard tab navigation */
+*:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+/* Disable standard fallback blur rings when click actions happen via mouse */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Visually Hidden Utility for Skip-Links & Screen Reader helper texts */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 24px;
+  background: linear-gradient(135deg, var(--cyan), #05b88a);
+  color: #0a0e1a;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glow-cyan);
+  z-index: 99999;
+  transition: top var(--transition-fast) ease;
+}
+
+/* Snap into visible boundary layout area upon initial tab interaction focus state */
+.skip-to-content:focus-visible {
+  top: 16px;
+  outline: 3px solid #f1f5f9;
+}

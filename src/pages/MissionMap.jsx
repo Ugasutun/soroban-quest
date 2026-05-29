@@ -95,7 +95,7 @@ export default function MissionMap() {
     }, [learningPathWidth, filteredMissions]);
 
     return (
-        <div className="mission-map-page">
+        <div id="main-content" className="mission-map-page">
             <div className="mission-map-header">
                 <h1 className="section-title">Mission Map</h1>
                 <p className="section-subtitle">
@@ -116,7 +116,7 @@ export default function MissionMap() {
                         const next = desktopPathLayout.points[index + 1];
                         const nodeColor = mission.completed ? '#22c55e' : mission.unlocked ? '#06d6a0' : '#374151';
                         const textColor = mission.completed ? '#22c55e' : mission.unlocked ? '#f1f5f9' : '#4b5563';
-                        const glowFilter = mission.completed ? 'url(#glowGreen)' : mission.unlocked ? 'url(#glowCyan)' : '';
+                        const  glowFilter = mission.completed ? 'url(#glowGreen)' : mission.unlocked ? 'url(#glowCyan)' : '';
                         const shortTitle = mission.title.length > 20 ? `${mission.title.slice(0, 19)}…` : mission.title;
 
                         return (
@@ -144,7 +144,7 @@ export default function MissionMap() {
                                     }}
                                     role={mission.unlocked ? 'button' : undefined}
                                     tabIndex={mission.unlocked ? 0 : -1}
-                                    aria-label={`Mission ${mission.order}: ${mission.title}`}
+                                    aria-label={`Mission ${mission.order}: ${mission.title}${mission.completed ? ', Status: Completed' : mission.unlocked ? ', Status: Unlocked' : ', Status: Locked'}`}
                                     style={{ cursor: mission.unlocked ? 'pointer' : 'not-allowed' }}
                                 >
                                     <circle className="path-node-hit-area" cx={cx} cy={cy} r="28" fill="transparent" />
@@ -166,6 +166,7 @@ export default function MissionMap() {
                                         fill={mission.completed ? '#22c55e' : mission.unlocked ? '#06d6a0' : '#6b7280'}
                                         fontSize="14"
                                         fontWeight="bold"
+                                        aria-hidden="true"
                                     >
                                         {mission.completed ? '✓' : mission.unlocked ? mission.order : '🔒'}
                                     </text>
@@ -177,6 +178,7 @@ export default function MissionMap() {
                                         fontSize="11"
                                         fontWeight="500"
                                         fontFamily="Inter, sans-serif"
+                                        aria-hidden="true"
                                     >
                                         {shortTitle}
                                     </text>
@@ -188,6 +190,7 @@ export default function MissionMap() {
                                         fontSize="9"
                                         fontWeight="600"
                                         fontFamily="Orbitron, sans-serif"
+                                        aria-hidden="true"
                                     >
                                         {mission.completed ? 'COMPLETED' : `${mission.xpReward} XP`}
                                     </text>
@@ -211,7 +214,7 @@ export default function MissionMap() {
                     </defs>
                 </svg>
             </div>
-            <div className="learning-path-mobile" aria-label="Mission timeline">
+            <div className="learning-path-mobile" aria-label="Mission timeline list hierarchy">
                 {filteredMissions.map((m, i) => (
                     <button
                         type="button"
@@ -219,7 +222,7 @@ export default function MissionMap() {
                         className={`timeline-item ${m.completed ? 'completed' : ''} ${!m.unlocked ? 'locked' : ''}`}
                         onClick={() => handleMissionClick(m)}
                         disabled={!m.unlocked}
-                        aria-label={`Mission ${m.order}: ${m.title}${m.completed ? ', completed' : m.unlocked ? ', unlocked' : ', locked'}`}
+                        aria-label={`Mission ${m.order}: ${m.title}${m.completed ? ', status completed' : m.unlocked ? ', status unlocked' : ', status locked'}`}
                     >
                         <span className="timeline-track" aria-hidden="true">
                             <span className="timeline-node">
@@ -246,7 +249,11 @@ export default function MissionMap() {
             {/* Mission Cards Grid */}
             <div className="mission-map-filters">
                 <div className="search-bar">
+                    <label htmlFor="mission-search-input" className="sr-only">
+                        Search missions by title or objective keywords
+                    </label>
                     <input
+                        id="mission-search-input"
                         type="text"
                         placeholder="Search missions..."
                         value={searchTerm}
@@ -254,55 +261,71 @@ export default function MissionMap() {
                         className="search-input"
                     />
                 </div>
-                <div className="filter-chips">
-                    <div className="difficulty-filters">
+                <div className="filter-chips" role="group" aria-label="Mission sorting filter categories">
+                    <div className="difficulty-filters" role="group" aria-label="Filter missions by difficulty level">
                         <button
+                            type="button"
                             className={`filter-chip ${selectedDifficulty === 'all' ? 'active' : ''}`}
                             onClick={() => setSelectedDifficulty('all')}
+                            aria-pressed={selectedDifficulty === 'all'}
                         >
                             All
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedDifficulty === 'beginner' ? 'active' : ''}`}
                             onClick={() => setSelectedDifficulty('beginner')}
+                            aria-pressed={selectedDifficulty === 'beginner'}
                         >
                             Beginner
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedDifficulty === 'intermediate' ? 'active' : ''}`}
                             onClick={() => setSelectedDifficulty('intermediate')}
+                            aria-pressed={selectedDifficulty === 'intermediate'}
                         >
                             Intermediate
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedDifficulty === 'advanced' ? 'active' : ''}`}
                             onClick={() => setSelectedDifficulty('advanced')}
+                            aria-pressed={selectedDifficulty === 'advanced'}
                         >
                             Advanced
                         </button>
                     </div>
-                    <div className="chapter-filters">
+                    <div className="chapter-filters" role="group" aria-label="Filter missions by chapter level">
                         <button
+                            type="button"
                             className={`filter-chip ${selectedChapter === 'all' ? 'active' : ''}`}
                             onClick={() => setSelectedChapter('all')}
+                            aria-pressed={selectedChapter === 'all'}
                         >
                             All Chapters
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedChapter === 1 ? 'active' : ''}`}
                             onClick={() => setSelectedChapter(1)}
+                            aria-pressed={selectedChapter === 1}
                         >
                             Chapter 1
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedChapter === 2 ? 'active' : ''}`}
                             onClick={() => setSelectedChapter(2)}
+                            aria-pressed={selectedChapter === 2}
                         >
                             Chapter 2
                         </button>
                         <button
+                            type="button"
                             className={`filter-chip ${selectedChapter === 3 ? 'active' : ''}`}
                             onClick={() => setSelectedChapter(3)}
+                            aria-pressed={selectedChapter === 3}
                         >
                             Chapter 3
                         </button>
@@ -311,7 +334,7 @@ export default function MissionMap() {
             </div>
             <div className="mission-map-grid">
                 {filteredMissions.length === 0 ? (
-                    <div className="no-missions-found">
+                    <div className="no-missions-found" role="status">
                         <p>No missions found matching your filters.</p>
                     </div>
                 ) : (
@@ -320,6 +343,15 @@ export default function MissionMap() {
                             key={m.id}
                             className={`mission-card ${m.completed ? 'completed' : ''} ${!m.unlocked ? 'locked' : ''}`}
                             onClick={() => handleMissionClick(m)}
+                            onKeyDown={(e) => {
+                                if (m.unlocked && (e.key === 'Enter' || e.key === ' ')) {
+                                    e.preventDefault();
+                                    handleMissionClick(m);
+                                }
+                            }}
+                            role="button"
+                            tabIndex={m.unlocked ? 0 : -1}
+                            aria-label={`Mission card ${m.order}: ${m.title}. Chapter ${m.chapter}. Reward: ${m.xpReward} XP. Difficulty: ${m.difficulty}.${m.completed ? ' Status: Completed.' : !m.unlocked ? ' Status: Locked.' : ' Status: Available.'}`}
                         >
                             <div className="mission-card-header">
                                 <span className="mission-card-chapter">Chapter {m.chapter} • Mission {m.order}</span>
@@ -328,20 +360,21 @@ export default function MissionMap() {
                             <h3 className="mission-card-title">{m.title}</h3>
                             <p className="mission-card-desc">{m.learningGoal}</p>
                             <div className="mission-card-footer">
-                                <div className="mission-card-concepts">
+                                <div className="mission-card-concepts" aria-label="Concepts introduced in this mission">
                                     {m.conceptsIntroduced.slice(0, 3).map(c => (
                                         <span key={c} className="concept-tag">{c}</span>
                                     ))}
                                 </div>
                                 <span className={`badge badge-${m.difficulty}`}>
+                                    <span className="sr-only">Difficulty level: </span>
                                     {m.difficulty}
                                 </span>
                             </div>
                             {m.completed && (
-                                <div className="mission-card-status completed">✓ Completed</div>
+                                <div className="mission-card-status completed"><span className="sr-only">Mission state: </span>✓ Completed</div>
                             )}
                             {!m.unlocked && (
-                                <div className="mission-card-status" style={{ color: 'var(--text-muted)' }}>🔒 Locked</div>
+                                <div className="mission-card-status" style={{ color: 'var(--text-muted)' }}><span className="sr-only">Mission state: </span>🔒 Locked</div>
                             )}
                         </div>
                     ))

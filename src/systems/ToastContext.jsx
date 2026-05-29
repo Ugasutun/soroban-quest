@@ -24,13 +24,20 @@ export const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* The Toast Container */}
-      <div className="toast-container">
+      {/* The Toast Container — Added aria-live and role attributes (#102) */}
+      <div 
+        className="toast-container" 
+        aria-live="polite" 
+        role="aria-live"
+      >
         {(toasts || []).map((toast) => (
           <div 
             key={toast.id} 
             className={`toast toast-${toast.type}`}
             onClick={() => removeToast(toast.id)}
+            role="alert"
+            aria-atomic="true"
+            style={{ cursor: "pointer" }}
           >
             <div className="toast-content">{toast.message}</div>
             <div className="toast-progress" />
@@ -43,7 +50,6 @@ export const ToastProvider = ({ children }) => {
 
 export const useToast = () => {
   const context = useContext(ToastContext);
-  // Fallback to prevent "Cannot destructure showToast of undefined"
   if (!context) {
     return {
       showToast: (msg) => console.warn("ToastProvider missing. Message:", msg)

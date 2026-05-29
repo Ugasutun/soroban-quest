@@ -15,7 +15,6 @@ import { MissionErrorBoundary } from "../components/ErrorBoundary";
 import CodeReplayPlayer from "../components/CodeReplayPlayer";
 import CodeRecorder from "../systems/codeRecorder";
 
-// ─── Monaco marker model name (must be consistent across calls) ──────────────
 const LIVE_MARKER_OWNER = "soroban-quest-live";
 
 export default function MissionDetail() {
@@ -23,7 +22,6 @@ export default function MissionDetail() {
   const navigate = useNavigate();
   const mission = getMissionById(missionId);
 
-  // Safe fallback in case ToastContext is not provided
   const toastContext = useToast();
   const showToast = toastContext?.showToast;
 
@@ -38,18 +36,17 @@ export default function MissionDetail() {
   const [showReplay, setShowReplay] = useState(false);
   const [replayData, setReplayData] = useState(null);
 
-  // Live validation state
   const [livePassCount, setLivePassCount] = useState(0);
   const [liveTotalCount, setLiveTotalCount] = useState(0);
 
   const terminalBodyRef = useRef(null);
-  const editorRef = useRef(null);       // Monaco editor instance
-  const monacoRef = useRef(null);       // Monaco global (for setModelMarkers)
-  const validatorRef = useRef(null);    // Debounced validator handle
+  const editorRef = useRef(null);       
+  const monacoRef = useRef(null);       
+  const validatorRef = useRef(null);    
+  const victoryModalRef = useRef(null);
 
   const { openInOkashi, toast } = useokashi();
 
-  // Compute replay & completion state
   const progressState = loadProgress();
   const isCompleted = progressState.completedMissions.includes(missionId);
   const hasReplay = CodeRecorder.hasRecording(missionId);
@@ -73,14 +70,14 @@ export default function MissionDetail() {
     }
   }, [missionId, mission]);
 
-  // --------------------------- Auto-scroll terminal ---------------------------
+  // Auto-scroll terminal
   useEffect(() => {
     if (terminalBodyRef.current) {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
     }
   }, [testResults]);
 
-  // ─── Set up debounced validator once ────────────────────────────────────────
+  // Set up debounced validator once
   useEffect(() => {
     const validator = createDebouncedValidator(500, (result) => {
       setLivePassCount(result.passCount);
@@ -93,16 +90,49 @@ export default function MissionDetail() {
       validator.cancel();
       clearMonacoMarkers();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Re-run live validation when code or mission changes ────────────────────
+  // Focus Trapping for the Victory Modal
+  useEffect(() => {
+    if (!showVictory || !victoryModalRef.current) return;
+
+    const modalElement = victoryModalRef.current;
+    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = modalElement.querySelectorAll(focusableSelectors);
+    
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement.focus();
+
+    const handleKeyDown = (e) => {
+      if (e.key !== "Tab") return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showVictory]);
+
+  // Re-run live validation when code or mission changes
   useEffect(() => {
     if (!mission || loading) return;
     validatorRef.current?.call(code, mission);
   }, [code, mission, loading]);
 
-  // ─── Monaco helpers ─────────────────────────────────────────────────────────
   const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -125,7 +155,6 @@ export default function MissionDetail() {
     if (model) monaco.editor.setModelMarkers(model, LIVE_MARKER_OWNER, []);
   }
 
-  // ─── Status bar helpers ──────────────────────────────────────────────────────
   function statusBarState() {
     if (liveTotalCount === 0) {
       return {
@@ -160,7 +189,6 @@ export default function MissionDetail() {
     };
   }
 
-  // --------------------------- Run Tests ---------------------------
   const handleRunTests = useCallback(async () => {
     if (isRunning || !mission) return;
     setIsRunning(true);
@@ -216,7 +244,6 @@ export default function MissionDetail() {
     setIsRunning(false);
   }, [code, mission, missionId, isRunning, showToast]);
 
-  // --------------------------- Hints ---------------------------
   const handleHint = () => {
     if (mission?.hints && hintIndex < mission.hints.length - 1) {
       const nextIndex = hintIndex + 1;
@@ -226,7 +253,6 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Reset ---------------------------
   const handleReset = () => {
     if (mission?.template) {
       setCode(mission.template);
@@ -236,7 +262,6 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Show Solution ---------------------------
   const handleShowSolution = () => {
     if (mission?.solution) {
       setCode(mission.solution);
@@ -244,14 +269,12 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Navigate to Next Mission ---------------------------
   const handleNextMission = () => {
     const next = getNextMission(missionId);
     if (next) navigate(`/mission/${next.id}`);
     else navigate("/missions");
   };
 
-  // --------------------------- Replay Functions ---------------------------
   const handleWatchReplay = () => {
     const recording = CodeRecorder.loadRecording(missionId);
     if (recording) {
@@ -265,10 +288,8 @@ export default function MissionDetail() {
     setReplayData(null);
   };
 
-  // --------------------------- Loading Skeleton ---------------------------
   if (loading) return <MissionDetailSkeleton />;
 
-  // --------------------------- Mission Not Found ---------------------------
   if (!mission) {
     return (
       <div style={{ padding: "4rem", textAlign: "center" }}>
@@ -277,6 +298,7 @@ export default function MissionDetail() {
           The mission "{missionId}" doesn't exist.
         </p>
         <button
+          type="button"
           className="btn btn-primary"
           onClick={() => navigate("/missions")}
           style={{ marginTop: "1.5rem" }}
@@ -289,7 +311,6 @@ export default function MissionDetail() {
 
   const sbState = statusBarState();
 
-  // --------------------------- Render Mission Detail ---------------------------
   if (showReplay) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -332,21 +353,21 @@ export default function MissionDetail() {
         />
       )}
 
-      <div className="mobile-tabs">
-        <label htmlFor="tab-story">Story</label>
-        <label htmlFor="tab-editor">Editor</label>
-        <label htmlFor="tab-tests">Tests</label>
+      <div className="mobile-tabs" role="tablist" aria-label="Mission options">
+        <label htmlFor="tab-story" role="tab">Story</label>
+        <label htmlFor="tab-editor" role="tab">Editor</label>
+        <label htmlFor="tab-tests" role="tab">Tests</label>
         {isCompleted && hasReplay && (
-          <label htmlFor="tab-replay">📹 Replay</label>
+          <label htmlFor="tab-replay" role="tab">📹 Replay</label>
         )}
       </div>
 
-      <div className="mission-detail">
+      <div id="main-content" className="mission-detail">
         {/* ---------------- Story Panel ---------------- */}
-        <div className="mission-story">
+        <div className="mission-story" role="region" aria-label="Mission briefing and story description">
           <div style={{ marginBottom: "var(--space-md)" }}>
             <span className={`badge badge-${mission.difficulty}`}>
-              {mission.difficulty}
+              <span className="sr-only">Difficulty: </span>{mission.difficulty}
             </span>
             <span className="mission-card-xp" style={{ marginLeft: "0.5rem" }}>
               ⚡ {mission.xpReward} XP
@@ -356,6 +377,7 @@ export default function MissionDetail() {
 
           {hintIndex >= 0 && (
             <div
+              role="alert"
               style={{
                 marginTop: "var(--space-lg)",
                 padding: "var(--space-md)",
@@ -381,37 +403,44 @@ export default function MissionDetail() {
         </div>
 
         {/* ---------------- Editor Panel ---------------- */}
-        <div className="mission-editor-panel">
+        <div className="mission-editor-panel" role="region" aria-label="Code submission workspace">
           <div className="mission-editor-toolbar">
             <div className="mission-editor-toolbar-left">
-              <div className="editor-file-tab">
-                <span className="dot" /> lib.rs
+              <div className="editor-file-tab" aria-label="Active context tab file: lib.rs">
+                <span className="dot" aria-hidden="true" /> lib.rs
               </div>
             </div>
             <div className="mission-editor-toolbar-right">
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleReset}
                 disabled={isRunning}
+                aria-label="Reset working environment code to template state"
               >
                 ↺ Reset
               </button>
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleHint}
                 disabled={
                   !mission.hints || hintIndex >= mission.hints.length - 1
                 }
+                aria-label="Unlock contextual hint description asset"
               >
                 💡 Hint
               </button>
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleShowSolution}
+                aria-label="Overwrite active workspace with solution code blueprint"
               >
                 👁️ Solution
               </button>
               <button
+                type="button"
                 className="btn btn-primary btn-sm"
                 onClick={handleRunTests}
                 disabled={isRunning}
@@ -421,7 +450,7 @@ export default function MissionDetail() {
             </div>
           </div>
 
-          <div className="editor-wrapper">
+          <div className="editor-wrapper" aria-label="Monaco code compilation editor interface">
             <Editor
               height="100%"
               defaultLanguage="rust"
@@ -447,7 +476,7 @@ export default function MissionDetail() {
             />
           </div>
 
-          {/* ── Live Validation Status Bar ─────────────────────────────────── */}
+          {/* Live Validation Status Bar */}
           {liveTotalCount > 0 && (
             <div
               style={{
@@ -462,6 +491,8 @@ export default function MissionDetail() {
                 fontFamily: "'JetBrains Mono', monospace",
                 userSelect: "none",
               }}
+              role="status"
+              aria-label="Live typing test checker tracker status panel"
             >
               <div
                 style={{
@@ -472,12 +503,13 @@ export default function MissionDetail() {
                   overflow: "hidden",
                   maxWidth: "120px",
                 }}
+                aria-hidden="true"
               >
                 <div
                   style={{
                     height: "100%",
                     width: `${sbState.pct}%`,
-                    background: sbState.barColor,
+                    barColor: sbState.barColor,
                     borderRadius: "2px",
                     transition: "width 0.3s ease, background 0.3s ease",
                   }}
@@ -486,7 +518,7 @@ export default function MissionDetail() {
               <span style={{ color: sbState.color, transition: "color 0.3s" }}>
                 {sbState.label}
               </span>
-              <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px" }}>
+              <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px" }} aria-hidden="true">
                 |
               </span>
               <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "10.5px" }}>
@@ -495,8 +527,8 @@ export default function MissionDetail() {
             </div>
           )}
 
-          {/* ---------------- Terminal Panel ---------------- */}
-          <div className="mission-terminal-panel">
+          {/* Terminal Panel */}
+          <div className="mission-terminal-panel" role="region" aria-label="Validation execution test terminal log terminal">
             <div
               className="terminal"
               style={{
@@ -506,10 +538,10 @@ export default function MissionDetail() {
               }}
             >
               <div className="terminal-header">
-                <span className="terminal-dot red" />
-                <span className="terminal-dot yellow" />
-                <span className="terminal-dot green" />
-                <span className="terminal-title">Test Output</span>
+                <span className="terminal-dot red" aria-hidden="true" />
+                <span className="terminal-dot yellow" aria-hidden="true" />
+                <span className="terminal-dot green" aria-hidden="true" />
+                <span className="terminal-title">Test Output Log</span>
               </div>
               <div
                 className="terminal-body"
@@ -544,7 +576,7 @@ export default function MissionDetail() {
           </div>
         </div>
 
-        {/* ---------------- Replay Panel ---------------- */}
+        {/* Replay Panel */}
         {isCompleted && hasReplay && (
           <div className="mission-replay-panel" style={{
             display: 'none',
@@ -552,34 +584,42 @@ export default function MissionDetail() {
             textAlign: 'center',
             background: 'var(--bg-secondary)',
             borderTop: '1px solid var(--border-subtle)'
-          }}>
+          }} role="region" aria-label="Problem solving archive replay tools">
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>
-              📹 Watch Your Solution
+              📹 Watch Your Solution Archive
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               Review your problem-solving process step by step.
             </p>
             <button
+              type="button"
               className="btn btn-primary"
               onClick={handleWatchReplay}
               style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
             >
-              ▶️ Start Replay
+              ▶️ Start Replay Simulation
             </button>
           </div>
         )}
       </div>
 
-      {/* ---------------- Victory Modal ---------------- */}
+      {/* Victory Modal */}
       {showVictory && victoryData && (
         <div className="modal-overlay" onClick={() => setShowVictory(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">🏆</div>
-            <h2 className="modal-title">Mission Complete!</h2>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            ref={victoryModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="victory-modal-heading"
+          >
+            <div className="modal-icon" role="img" aria-label="Victory reward gold crown trophy">🏆</div>
+            <h2 id="victory-modal-heading" className="modal-title">Mission Complete!</h2>
             <p className="modal-message">
-              You've completed <strong>{mission.title}</strong>
+              You&apos;ve successfully completed <strong>{mission.title}</strong>
             </p>
-            <div className="modal-xp">+{victoryData.xp} XP</div>
+            <div className="modal-xp">+{victoryData.xp} XP gathered</div>
 
             {victoryData.leveledUp && (
               <p
@@ -596,7 +636,7 @@ export default function MissionDetail() {
 
             {victoryData.newBadges?.length > 0 && (
               <p style={{ color: "var(--gold)", marginBottom: "1rem" }}>
-                🏅 New badge{victoryData.newBadges.length > 1 ? "s" : ""} earned!
+                🏅 New badge achievement unlocked! Check profile center logs.
               </p>
             )}
 
@@ -607,18 +647,19 @@ export default function MissionDetail() {
                 justifyContent: "center",
               }}
             >
-              <button className="btn btn-primary" onClick={handleNextMission}>
-                Next Mission →
+              <button type="button" className="btn btn-primary" onClick={handleNextMission}>
+                Next Mission Objective →
               </button>
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate("/missions")}
               >
-                Mission Map
+                Return to Mission Map
               </button>
             </div>
 
-            {/* Okashi Button & Toast */}
+            {/* Okashi Section */}
             <div
               style={{
                 marginTop: "1.25rem",
@@ -630,7 +671,7 @@ export default function MissionDetail() {
                 gap: "8px",
               }}
             >
-              <button onClick={() => openInOkashi(code)} className="okashi-btn">
+              <button type="button" onClick={() => openInOkashi(code)} className="okashi-btn">
                 🚀 Try on Okashi — Compile & Deploy
               </button>
 
