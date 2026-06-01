@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadProgress } from '../systems/storage';
-import { getAllMissions } from '../systems/missionLoader';
 import { useTranslation } from '../i18n/useTranslation';
 import { getAllMissions, isMissionUnlocked } from '../systems/missionLoader';
 import useDocumentTitle from '../systems/useDocumentTitle';
