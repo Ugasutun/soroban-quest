@@ -14,6 +14,7 @@ import { getAllMissions } from "../systems/missionLoader";
 import { avatars } from "../data/avatars";
 import { logActivity, ACTIVITY_TYPES } from "../systems/activityLogger";
 import useDocumentTitle from '../systems/useDocumentTitle';
+import { useToast } from '../systems/ToastContext';
 
 export default function Profile() {
   const { showToast } = useToast();
@@ -57,9 +58,8 @@ export default function Profile() {
   /* ---------------- PROGRESS ACTIONS ---------------- */
   const handleExport = () => {
     exportProgress();
-    setImportStatus("✅ Progress exported!");
+    showToast("Progress configuration data exported!", "success");
     logActivity(ACTIVITY_TYPES.EXPORT, {}, "Exported adventure progress");
-    setTimeout(() => setImportStatus(""), 3000);
   };
 
   const handleImport = async (e) => {
@@ -69,7 +69,7 @@ export default function Profile() {
     try {
       const newState = await importProgress(file);
       setState(newState);
-      setImportStatus("✅ Progress imported successfully!");
+      showToast("Progress state imported successfully!", "success");
       logActivity(ACTIVITY_TYPES.IMPORT, {}, "Imported adventure progress from file");
     } catch {
       showToast("Invalid data payload — backup corrupted.", "error");
