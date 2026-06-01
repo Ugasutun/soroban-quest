@@ -1,4 +1,8 @@
 import React, { useState, useRef } from "react";
+// Import the fixed custom layout definitions directly
+import "./Profile.css";
+import { useToast } from '../systems/ToastContext';
+
 import { Link } from "react-router-dom";
 import {
   loadProgress,
@@ -13,8 +17,11 @@ import { getXPProgress, getRankTitle, BADGES } from "../systems/gameEngine";
 import { getAllMissions } from "../systems/missionLoader";
 import { avatars } from "../data/avatars";
 import { logActivity, ACTIVITY_TYPES } from "../systems/activityLogger";
+import useDocumentTitle from '../systems/useDocumentTitle';
 
 export default function Profile() {
+  const { showToast } = useToast();
+  useDocumentTitle('Profile');
   const [state, setState] = useState(loadProgress());
   const [profile, setProfile] = useState(() => loadProfile());
 
@@ -22,7 +29,6 @@ export default function Profile() {
   const [name, setName] = useState(profile.name || "");
   const [avatar, setAvatar] = useState(profile.avatar || "🛡️");
 
-  const [importStatus, setImportStatus] = useState("");
   const fileInputRef = useRef(null);
 
   const xpProgress = getXPProgress(state);
@@ -39,6 +45,9 @@ export default function Profile() {
     saveProfile(updated);
     setProfile(updated);
     setEditing(false);
+    
+    // Wire up success notification
+    showToast("Profile credentials synchronized!", "success");
   };
 
   const openEdit = () => {
@@ -50,6 +59,8 @@ export default function Profile() {
   /* ---------------- PROGRESS ACTIONS ---------------- */
   const handleExport = () => {
     exportProgress();
+    // Replaced local status state with unified system toast alerts
+    showToast("Progress configuration data exported!", "success");
     setImportStatus("✅ Progress exported!");
     logActivity(ACTIVITY_TYPES.EXPORT, {}, "Exported adventure progress");
     setTimeout(() => setImportStatus(""), 3000);
@@ -62,26 +73,24 @@ export default function Profile() {
     try {
       const newState = await importProgress(file);
       setState(newState);
+      showToast("Progress state imported successfully!", "success");
       setImportStatus("✅ Progress imported successfully!");
       logActivity(ACTIVITY_TYPES.IMPORT, {}, "Imported adventure progress from file");
     } catch {
-      setImportStatus("❌ Invalid file — could not import.");
+      showToast("Invalid data payload — backup corrupted.", "error");
     }
-
-    setTimeout(() => setImportStatus(""), 3000);
   };
 
   const handleReset = () => {
     if (window.confirm("Reset all progress? This cannot be undone.")) {
       const newState = resetProgress();
       setState(newState);
-      setImportStatus("🗑️ Progress reset.");
-      setTimeout(() => setImportStatus(""), 3000);
+      showToast("Pilot profile progress cache reset to defaults.", "warning");
     }
   };
 
   const completedMissions = missions.filter((m) =>
-    state.completedMissions.includes(m.id),
+    state.completedMissions.includes(m.id)
   );
 
   return (
@@ -163,6 +172,7 @@ export default function Profile() {
         <div className="card mt-4" role="form" aria-labelledby="edit-profile-heading">
           <h3 id="edit-profile-heading" className="mb-3">Edit Profile</h3>
 
+<<<<<<< feature/comprehensive-a11y-102
           {/* NAME */}
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <label htmlFor="profile-name-edit-input" className="text-sm font-semibold">
@@ -205,6 +215,43 @@ export default function Profile() {
           <div className="flex gap-2">
             <button type="button" className="btn btn-primary" onClick={saveUserProfile}>
               Save Profile Changes
+=======
+          {/* NAME INPUT */}
+          <input
+            className="profile-input-full"
+            className="w-full p-2 mb-3 rounded"
+            style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter name"
+          />
+
+          {/* AVATAR SELECTOR WITH NATIVE 6-COLUMN RESPONSIVE GRID */}
+          <div className="avatar-grid-6col">
+            {avatars.map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setAvatar(a)}
+                className={`avatar-btn-node text-2xl ${
+                  avatar === a ? "active" : ""
+                }`}
+                className="text-2xl p-2 rounded transition"
+                style={{
+                  backgroundColor: avatar === a ? "var(--cyan-dim)" : "var(--bg-glass)",
+                  transform: avatar === a ? "scale(1.1)" : "none",
+                }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+
+          {/* ACTION BUTTON CONTAINER */}
+          <div className="profile-flex-row">
+            <button className="btn btn-primary" onClick={saveUserProfile}>
+              Save
+>>>>>>> main
             </button>
 
             <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
@@ -237,6 +284,7 @@ export default function Profile() {
         })}
       </div>
 
+<<<<<<< feature/comprehensive-a11y-102
       {/* MISSIONS */}
       <h2 className="profile-section-title">✅ Completed Missions Catalog</h2>
 
@@ -255,6 +303,24 @@ export default function Profile() {
 
       {/* DATA */}
       <h2 className="profile-section-title">⚙️ Local Progression Management Data</h2>
+=======
+      {/* COMPLETED MISSIONS LIST */}
+      <h2 className="profile-section-title">✅ Completed Missions</h2>
+
+      {completedMissions.length === 0 ? (
+        <div className="card text-center p-6">No missions completed yet.</div>
+      ) : (
+        completedMissions.map((m) => (
+          <div key={m.id} className="card profile-space-between">
+            <span>{m.title}</span>
+            <span className="text-gold">+{m.xpReward} XP</span>
+          </div>
+        ))
+      )}
+
+      {/* CONFIGURATION DATA MANAGEMENT */}
+      <h2 className="profile-section-title">⚙️ Data</h2>
+>>>>>>> main
 
       <div className="profile-actions" role="group" aria-label="Game progress backup controls">
         <button type="button" className="btn btn-secondary" onClick={handleExport}>
@@ -283,10 +349,13 @@ export default function Profile() {
           aria-label="Hidden file progress backup uploader tool"
         />
       </div>
+<<<<<<< feature/comprehensive-a11y-102
 
       {importStatus && (
         <p className="mt-3 text-sm text-gray-400" role="status">{importStatus}</p>
       )}
+=======
+>>>>>>> main
     </div>
   );
 }
