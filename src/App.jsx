@@ -9,6 +9,10 @@ import Journal from "./pages/Journal";
 import Campaigns from "./pages/Campaigns";
 import SkillTree from "./pages/SkillTree";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
+import NotFound from "./pages/NotFound";
+
+// 1. Import the ErrorBoundary
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./systems/ToastContext";
 import LoadingScreen from "./components/LoadingScreen";
@@ -31,6 +35,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
+        <ScrollToTop />
         <div className="app">
           <Navbar />
           <main className="main-content">
