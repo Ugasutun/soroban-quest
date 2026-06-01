@@ -8,9 +8,11 @@ import { isMissionUnlocked } from "../systems/missionLoader.js";
 import { useTranslation } from "../i18n/useTranslation";
 
 import "./Campaigns.css";
+import useDocumentTitle from '../systems/useDocumentTitle';
 
 export default function Campaigns() {
   const { t, language } = useTranslation();
+  useDocumentTitle('Campaigns');
   const [progress, setProgress] = useState(loadProgress());
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [showLoreModal, setShowLoreModal] = useState(false);

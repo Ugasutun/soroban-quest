@@ -13,15 +13,17 @@ import { getXPProgress, BADGES } from "../systems/gameEngine";
 import { getAllMissions } from "../systems/missionLoader";
 import { avatars } from "../data/avatars";
 import { logActivity, ACTIVITY_TYPES } from "../systems/activityLogger";
+import useDocumentTitle from '../systems/useDocumentTitle';
 import { useTranslation } from "../i18n/useTranslation";
 
 // Total rank entries: 0..10. Anything >= 10 maps to the last rank.
 const MAX_RANK_INDEX = 10;
 
 export default function Profile() {
+  useDocumentTitle('Profile');
   const { t, language } = useTranslation();
-
   const [state, setState] = useState(loadProgress());
+
   const [profile, setProfile] = useState(() => loadProfile());
 
   const [editing, setEditing] = useState(false);

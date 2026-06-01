@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "../i18n/useTranslation";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const { t } = useTranslation();
@@ -20,17 +21,17 @@ export default function Footer() {
         <div className="footer-section">
           <h4>{t("footer.resources.heading")}</h4>
           <ul>
-            <li><a href="https://soroban.stellar.org" target="_blank" rel="noopener">{t("footer.resources.docs")}</a></li>
-            <li><a href="https://stellar.org/developers" target="_blank" rel="noopener">{t("footer.resources.sdk")}</a></li>
-            <li><a href="https://github.com/JafetCHVDev/soroban-quest" target="_blank" rel="noopener">{t("footer.resources.github")}</a></li>
+            <li><a href="https://soroban.stellar.org" target="_blank" rel="noopener noreferrer">{t("footer.resources.docs")}</a></li>
+            <li><a href="https://stellar.org/developers" target="_blank" rel="noopener noreferrer">{t("footer.resources.sdk")}</a></li>
+            <li><a href="https://github.com/JafetCHVDev/soroban-quest" target="_blank" rel="noopener noreferrer">{t("footer.resources.github")}</a></li>
           </ul>
         </div>
 
         <div className="footer-section">
           <h4>{t("footer.community.heading")}</h4>
           <ul>
-            <li><a href="#" target="_blank" rel="noopener">{t("footer.community.discord")}</a></li>
-            <li><a href="#" target="_blank" rel="noopener">{t("footer.community.telegram")}</a></li>
+            <li><a href="#" target="_blank" rel="noopener noreferrer">{t("footer.community.discord")}</a></li>
+            <li><a href="#" target="_blank" rel="noopener noreferrer">{t("footer.community.telegram")}</a></li>
           </ul>
         </div>
       </div>

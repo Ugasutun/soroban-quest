@@ -7,6 +7,7 @@ import {
 import { loadProgress } from "../systems/storage";
 import { useTranslation } from "../i18n/useTranslation";
 import "./Journal.css";
+import useDocumentTitle from '../systems/useDocumentTitle';
 
 // Filter chip definitions: i18n key for label + the EVENT_LABEL bucket it matches.
 const FILTER_DEFS = [
@@ -82,6 +83,7 @@ function formatEventMessage(entry, t) {
 
 export default function Journal() {
   const { t, language } = useTranslation();
+  useDocumentTitle('Journal');
   const [log, setLog] = useState(() => getActivityLog());
   const [filter, setFilter] = useState("ALL");
   const progress = loadProgress();

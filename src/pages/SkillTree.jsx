@@ -3,6 +3,7 @@ import { missions, localizeMissions } from '../data/missions';
 import { loadProgress } from '../systems/storage';
 import { useTranslation } from '../i18n/useTranslation';
 import './SkillTree.css';
+import useDocumentTitle from '../systems/useDocumentTitle';
 
 // Concept identifiers are kept untranslated — they're code-level tokens
 // (e.g. `contract`, `Env`, `require_auth`) that appear verbatim in Rust.
@@ -27,6 +28,7 @@ const conceptCategories = {
 
 export default function SkillTree() {
   const { t, language } = useTranslation();
+  useDocumentTitle('Skill Tree');
   const [completedMissions, setCompletedMissions] = useState([]);
   const [selectedConcept, setSelectedConcept] = useState(null);
   const [hoveredConcept, setHoveredConcept] = useState(null);
