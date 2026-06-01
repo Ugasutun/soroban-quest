@@ -1,3 +1,8 @@
+/* ==========================================
+   Campaign System — Grouped mission chapters
+   with lore, progression gates, hero images
+   ========================================== */
+
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
@@ -22,7 +27,7 @@ export default function Campaigns() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Focus Trapping for the Lore Modal
+  // Focus Trapping for the Lore Modal attached directly to Element Context instead of Window
   useEffect(() => {
     if (!showLoreModal || !loreModalRef.current) return;
 
@@ -35,7 +40,7 @@ export default function Campaigns() {
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
-    // Auto-focus first element
+    // Auto-focus first element cleanly
     firstElement.focus();
 
     const handleKeyDown = (e) => {
@@ -54,8 +59,8 @@ export default function Campaigns() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    modalElement.addEventListener("keydown", handleKeyDown);
+    return () => modalElement.removeEventListener("keydown", handleKeyDown);
   }, [showLoreModal]);
 
   const handleCampaignClick = (campaign) => {
@@ -235,7 +240,7 @@ export default function Campaigns() {
             aria-labelledby="lore-modal-title"
           >
             <div className="modal-icon" role="img" aria-label="Scroll scroll artifact icon">📜</div>
-            <h2 id="lore-modal-title" className="modal-title">Chapter Introduction Lore</h2>
+            <h2 id="lore-modal-title" className="modal-title">Chapter Introduction</h2>
             <div className="modal-lore">
               <ReactMarkdown>{selectedCampaign.lore}</ReactMarkdown>
             </div>

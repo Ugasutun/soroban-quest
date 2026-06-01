@@ -116,7 +116,7 @@ export default function MissionMap() {
                         const next = desktopPathLayout.points[index + 1];
                         const nodeColor = mission.completed ? '#22c55e' : mission.unlocked ? '#06d6a0' : '#374151';
                         const textColor = mission.completed ? '#22c55e' : mission.unlocked ? '#f1f5f9' : '#4b5563';
-                        const  glowFilter = mission.completed ? 'url(#glowGreen)' : mission.unlocked ? 'url(#glowCyan)' : '';
+                        const glowFilter = mission.completed ? 'url(#glowGreen)' : mission.unlocked ? 'url(#glowCyan)' : '';
                         const shortTitle = mission.title.length > 20 ? `${mission.title.slice(0, 19)}…` : mission.title;
 
                         return (
@@ -247,91 +247,6 @@ export default function MissionMap() {
             </div>
 
             {/* Mission Cards Grid */}
-            <div className="mission-map-filters">
-                <div className="search-bar">
-                    <label htmlFor="mission-search-input" className="sr-only">
-                        Search missions by title or objective keywords
-                    </label>
-                    <input
-                        id="mission-search-input"
-                        type="text"
-                        placeholder="Search missions..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
-                </div>
-                <div className="filter-chips" role="group" aria-label="Mission sorting filter categories">
-                    <div className="difficulty-filters" role="group" aria-label="Filter missions by difficulty level">
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedDifficulty === 'all' ? 'active' : ''}`}
-                            onClick={() => setSelectedDifficulty('all')}
-                            aria-pressed={selectedDifficulty === 'all'}
-                        >
-                            All
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedDifficulty === 'beginner' ? 'active' : ''}`}
-                            onClick={() => setSelectedDifficulty('beginner')}
-                            aria-pressed={selectedDifficulty === 'beginner'}
-                        >
-                            Beginner
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedDifficulty === 'intermediate' ? 'active' : ''}`}
-                            onClick={() => setSelectedDifficulty('intermediate')}
-                            aria-pressed={selectedDifficulty === 'intermediate'}
-                        >
-                            Intermediate
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedDifficulty === 'advanced' ? 'active' : ''}`}
-                            onClick={() => setSelectedDifficulty('advanced')}
-                            aria-pressed={selectedDifficulty === 'advanced'}
-                        >
-                            Advanced
-                        </button>
-                    </div>
-                    <div className="chapter-filters" role="group" aria-label="Filter missions by chapter level">
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedChapter === 'all' ? 'active' : ''}`}
-                            onClick={() => setSelectedChapter('all')}
-                            aria-pressed={selectedChapter === 'all'}
-                        >
-                            All Chapters
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedChapter === 1 ? 'active' : ''}`}
-                            onClick={() => setSelectedChapter(1)}
-                            aria-pressed={selectedChapter === 1}
-                        >
-                            Chapter 1
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedChapter === 2 ? 'active' : ''}`}
-                            onClick={() => setSelectedChapter(2)}
-                            aria-pressed={selectedChapter === 2}
-                        >
-                            Chapter 2
-                        </button>
-                        <button
-                            type="button"
-                            className={`filter-chip ${selectedChapter === 3 ? 'active' : ''}`}
-                            onClick={() => setSelectedChapter(3)}
-                            aria-pressed={selectedChapter === 3}
-                        >
-                            Chapter 3
-                        </button>
-                    </div>
-                </div>
-            </div>
             <div className="mission-map-grid">
                 {filteredMissions.length === 0 ? (
                     <div className="no-missions-found" role="status">

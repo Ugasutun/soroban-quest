@@ -24,11 +24,11 @@ export const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* The Toast Container — Added aria-live and role attributes (#102) */}
+      {/* The Toast Container — Updated invalid role to standard semantic role status (#102) */}
       <div 
         className="toast-container" 
         aria-live="polite" 
-        role="aria-live"
+        role="status"
       >
         {(toasts || []).map((toast) => (
           <div 
