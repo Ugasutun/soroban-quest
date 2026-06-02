@@ -43,7 +43,7 @@ export default function MissionDetail() {
 
   const [livePassCount, setLivePassCount] = useState(0);
   const [liveTotalCount, setLiveTotalCount] = useState(0);
-  const [activeTab, setActiveTab] = useState("story"); // Handles clean custom tab interaction states safely
+  const [activeTab, setActiveTab] = useState("story"); 
 
   const terminalBodyRef = useRef(null);
   const editorRef = useRef(null);      
@@ -70,8 +70,6 @@ export default function MissionDetail() {
         setLiveTotalCount(0);
         setActiveTab("story");
         setLoading(false);
-        // Keep stored message in English for log durability; Journal will
-        // re-compose the displayed string via t() at render time using `data`.
         logActivity(
           ACTIVITY_TYPES.MISSION_STARTED,
           { missionId, title: mission.title },
@@ -103,10 +101,9 @@ export default function MissionDetail() {
       validator.cancel();
       clearMonacoMarkers();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus Trapping for the Victory Modal attached directly to Local Element Context instead of Window
+  // Focus Trapping for the Victory Modal
   useEffect(() => {
     if (!showVictory || !victoryModalRef.current) return;
 
@@ -209,9 +206,6 @@ export default function MissionDetail() {
       }),
       color: "#fbbf24",
       background: "#d97706",
-      pct,
-    };
-
       pct,
     };
   }
@@ -364,8 +358,7 @@ export default function MissionDetail() {
 
   return (
     <MissionErrorBoundary>
-
-      {/* Structural view state panel mapping switches via semantic button actions */}
+      {/* Tabs */}
       <div className="mobile-tabs" role="tablist" aria-label={t("missionDetail.tabs.ariaLabel")}>
         <button
           type="button"
@@ -405,8 +398,6 @@ export default function MissionDetail() {
             📹 {t("missionDetail.tabs.replay")}
           </button>
         )}
-
-        )}
       </div>
 
       <div id="main-content" className={`mission-detail active-tab-${activeTab}`}>
@@ -419,15 +410,13 @@ export default function MissionDetail() {
         >
           <div style={{ marginBottom: "var(--space-md)" }}>
             <span className={`badge badge-${mission.difficulty}`}>
-
-             <span className="sr-only">{t("missionDetail.difficultyLabel")} </span>{t(`difficulty.${mission.difficulty}`)}
-
+              <span className="sr-only">{t("missionDetail.difficultyLabel")} </span>
+              {t(`difficulty.${mission.difficulty}`)}
             </span>
             <span className="mission-card-xp" style={{ marginLeft: "0.5rem" }}>
               {t("missionMap.card.xp", { xp: mission.xpReward })}
             </span>
           </div>
-          {/* Story is localized via the mission data file (Phase 3). */}
           <ReactMarkdown>{mission.story}</ReactMarkdown>
 
           {hintIndex >= 0 && (
@@ -444,13 +433,7 @@ export default function MissionDetail() {
               <strong style={{ color: "var(--gold)" }}>
                 {t("missionDetail.hint.label", { index: hintIndex + 1 })}
               </strong>
-              <p
-                style={{
-                  color: "var(--text-secondary)",
-                  marginTop: "4px",
-                  fontSize: "0.85rem",
-                }}
-              >
+              <p style={{ color: "var(--text-secondary)", marginTop: "4px", fontSize: "0.85rem" }}>
                 {mission.hints[hintIndex]}
               </p>
             </div>
@@ -484,9 +467,7 @@ export default function MissionDetail() {
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleHint}
-                disabled={
-                  !mission.hints || hintIndex >= mission.hints.length - 1
-                }
+                disabled={!mission.hints || hintIndex >= mission.hints.length - 1}
                 aria-label="Unlock contextual hint description asset"
               >
                 {t("missionDetail.editor.hint")}
@@ -595,55 +576,24 @@ export default function MissionDetail() {
           aria-label="Validation execution test terminal log terminal"
           style={{ display: activeTab === "tests" ? "block" : "none" }}
         >
-          <div
-            className="terminal"
-            style={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+          <div className="terminal" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
             <div className="terminal-header">
               <span className="terminal-dot red" aria-hidden="true" />
               <span className="terminal-dot yellow" aria-hidden="true" />
               <span className="terminal-dot green" aria-hidden="true" />
-              <span className="terminal-title">Test Output Log</span>
+              <span className="terminal-title">{t("missionDetail.terminal.title")}</span>
             </div>
-            <div
-              className="terminal-body"
-              ref={terminalBodyRef}
-              style={{ flex: 1 }}
-            >
-
-              <div className="terminal-header">
-                <span className="terminal-dot red" />
-                <span className="terminal-dot yellow" />
-                <span className="terminal-dot green" />
-                <span className="terminal-title">{t("missionDetail.terminal.title")}</span>
-              </div>
-              <div
-                className="terminal-body"
-                ref={terminalBodyRef}
-                style={{ flex: 1 }}
-              >
-                {testResults.length === 0 ? (
-                  <span
-                    className="terminal-line info"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {t("missionDetail.terminal.placeholder")}
-                  </span>
-                ) : (
-                  testResults.map((r, i) => (
-     
+            <div className="terminal-body" ref={terminalBodyRef} style={{ flex: 1 }}>
+              {testResults.length === 0 ? (
+                <span className="terminal-line info" style={{ color: "var(--text-muted)" }}>
+                  {t("missionDetail.terminal.placeholder")}
+                </span>
+              ) : (
+                testResults.map((r, i) => (
                   <span
                     key={i}
                     className={`terminal-line ${
-                      r.passed === true
-                        ? "pass"
-                        : r.passed === false
-                        ? "fail"
-                        : "info"
+                      r.passed === true ? "pass" : r.passed === false ? "fail" : "info"
                     }`}
                   >
                     {r.message}
@@ -669,9 +619,7 @@ export default function MissionDetail() {
             aria-label="Problem solving archive replay tools"
           >
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>
-
               📹 {t("missionDetail.replay.header")}
-
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               {t("missionDetail.replay.body")}
@@ -682,9 +630,7 @@ export default function MissionDetail() {
               onClick={handleWatchReplay}
               style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
             >
-
               ▶️ {t("missionDetail.replay.start")}
-
             </button>
           </div>
         )}
@@ -693,7 +639,6 @@ export default function MissionDetail() {
       {/* Victory Modal */}
       {showVictory && victoryData && (
         <div className="modal-overlay" onClick={() => setShowVictory(false)}>
-
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
@@ -709,15 +654,8 @@ export default function MissionDetail() {
             </p>
             <div className="modal-xp">{t("missionDetail.victory.xpGained", { xp: victoryData.xp })}</div>
 
-
             {victoryData.leveledUp && (
-              <p
-                style={{
-                  color: "var(--purple)",
-                  fontFamily: "var(--font-display)",
-                  marginBottom: "1rem",
-                }}
-              >
+              <p style={{ color: "var(--purple)", fontFamily: "var(--font-display)", marginBottom: "1rem" }}>
                 {t("missionDetail.victory.levelUp", {
                   level: victoryData.newLevel,
                   rank: victoryRank,
@@ -727,34 +665,18 @@ export default function MissionDetail() {
 
             {victoryData.newBadges?.length > 0 && (
               <p style={{ color: "var(--gold)", marginBottom: "1rem" }}>
-
                 🏅 {victoryData.newBadges.length > 1
                   ? t("missionDetail.victory.badgeEarnedMany")
                   : t("missionDetail.victory.badgeEarnedOne")}
-
               </p>
             )}
 
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                justifyContent: "center",
-              }}
-            >
-
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
               <button type="button" className="btn btn-primary" onClick={handleNextMission}>
                 {t("missionDetail.victory.next")}
-
               </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => navigate("/missions")}
-              >
-
+              <button type="button" className="btn btn-secondary" onClick={() => navigate("/missions")}>
                 {t("missionDetail.victory.map")}
-
               </button>
             </div>
 
@@ -770,22 +692,11 @@ export default function MissionDetail() {
                 gap: "8px",
               }}
             >
-
               <button type="button" onClick={() => openInOkashi(code)} className="okashi-btn">
                 {t("missionDetail.okashi.button")}
-
               </button>
 
-              <p
-                style={{
-                  fontSize: "11px",
-                  color: "#94a3b8",
-                  textAlign: "center",
-                  maxWidth: "300px",
-                  margin: 0,
-                  lineHeight: "1.5",
-                }}
-              >
+              <p style={{ fontSize: "11px", color: "#94a3b8", textAlign: "center", maxWidth: "300px", margin: 0, lineHeight: "1.5" }}>
                 {t("missionDetail.okashi.help")}
               </p>
 
@@ -796,14 +707,9 @@ export default function MissionDetail() {
                     borderRadius: "8px",
                     fontSize: "13px",
                     fontWeight: "500",
-                    background:
-                      toast.state === TOAST_STATES.SUCCESS ? "#064e3b" : "#4c0519",
-                    color:
-                      toast.state === TOAST_STATES.SUCCESS ? "#6ee7b7" : "#fda4af",
-                    border:
-                      toast.state === TOAST_STATES.SUCCESS
-                        ? "1px solid #065f46"
-                        : "1px solid #881337",
+                    background: toast.state === TOAST_STATES.SUCCESS ? "#064e3b" : "#4c0519",
+                    color: toast.state === TOAST_STATES.SUCCESS ? "#6ee7b7" : "#fda4af",
+                    border: toast.state === TOAST_STATES.SUCCESS ? "1px solid #065f46" : "1px solid #881337",
                     maxWidth: "340px",
                     textAlign: "center",
                     lineHeight: "1.5",
