@@ -2027,6 +2027,58 @@ button {
   overflow: hidden;
 }
 
+<<<<<<< feature/comprehensive-a11y-102
+/* ==========================================
+   GLOBAL ACCESSIBILITY & KEYBOARD FOCUS STYLES (#102)
+   ========================================== */
+
+/* High contrast outline rings only targeting active keyboard tab navigation */
+*:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+/* Disable standard fallback blur rings when click actions happen via mouse */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Visually Hidden Utility for Skip-Links & Screen Reader helper texts */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 24px;
+  background: linear-gradient(135deg, var(--cyan), #05b88a);
+  color: #0a0e1a;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glow-cyan);
+  z-index: 99999;
+  transition: top var(--transition-fast) ease;
+}
+
+/* Snap into visible boundary layout area upon initial tab interaction focus state */
+.skip-to-content:focus-visible {
+  top: 16px;
+  outline: 3px solid #f1f5f9;
+}
+
+/* Visually hides assistive text snippets completely off screen for sighted users */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+=======
 
 /* Ambient Pulse Glow background element */
 .quest-loading-glow {
@@ -2106,3 +2158,4 @@ button {
   0% { opacity: 0.6; transform: scale(0.98); }
   100% { opacity: 1; transform: scale(1.02); }
 }
+>>>>>>> main
