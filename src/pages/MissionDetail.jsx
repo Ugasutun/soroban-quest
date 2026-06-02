@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { getMissionById, getNextMission } from "../systems/missionLoader";
 import { runTests } from "../systems/testRunner";
 import { loadProgress, saveProgress } from "../systems/storage";
-import { completeMission, recordAttempt, getRankTitle } from "../systems/gameEngine";
+import { completeMission, recordAttempt } from "../systems/gameEngine";
 import { logActivity, ACTIVITY_TYPES } from "../systems/activityLogger";
 import MissionDetailSkeleton from "../components/MissionDetailSkeleton";
 import { useokashi, TOAST_STATES } from "../systems/useokashi";
@@ -14,15 +14,18 @@ import { useToast } from "../systems/ToastContext";
 import { MissionErrorBoundary } from "../components/ErrorBoundary";
 import CodeReplayPlayer from "../components/CodeReplayPlayer";
 import CodeRecorder from "../systems/codeRecorder";
+import { useTranslation } from "../i18n/useTranslation";
 import useDocumentTitle from '../systems/useDocumentTitle';
 
 const LIVE_MARKER_OWNER = "soroban-quest-live";
+const MAX_RANK_INDEX = 10;
 
 export default function MissionDetail() {
   useDocumentTitle('Mission Detail');
   const { missionId } = useParams();
   const navigate = useNavigate();
-  const mission = getMissionById(missionId);
+  const { t, language } = useTranslation();
+  const mission = getMissionById(missionId, language);
 
   const toastContext = useToast();
   const showToast = toastContext?.showToast;
@@ -67,7 +70,13 @@ export default function MissionDetail() {
         setLiveTotalCount(0);
         setActiveTab("story");
         setLoading(false);
-        logActivity(ACTIVITY_TYPES.MISSION_STARTED, { missionId, title: mission.title }, `Started mission: ${mission.title}`);
+        // Keep stored message in English for log durability; Journal will
+        // re-compose the displayed string via t() at render time using `data`.
+        logActivity(
+          ACTIVITY_TYPES.MISSION_STARTED,
+          { missionId, title: mission.title },
+          `Started mission: ${mission.title}`,
+        );
       }, 1500);
     } else {
       setLoading(false);
@@ -163,7 +172,7 @@ export default function MissionDetail() {
   function statusBarState() {
     if (liveTotalCount === 0) {
       return {
-        label: "Checking…",
+        label: t("missionDetail.status.checking"),
         color: "var(--text-muted)",
         background: "rgba(255,255,255,0.08)",
         pct: 0,
@@ -172,24 +181,37 @@ export default function MissionDetail() {
     const pct = Math.round((livePassCount / liveTotalCount) * 100);
     if (livePassCount === liveTotalCount) {
       return {
-        label: `${livePassCount}/${liveTotalCount} checks passing ✓`,
+        label: t("missionDetail.status.allPassing", {
+          passed: livePassCount,
+          total: liveTotalCount,
+        }),
         color: "#34d399",
         background: "#059669",
         pct,
       };
     }
+
     if (livePassCount === 0) {
       return {
-        label: `${livePassCount}/${liveTotalCount} checks passing`,
+        label: t("missionDetail.status.passing", {
+          passed: livePassCount,
+          total: liveTotalCount,
+        }),
         color: "#f87171",
         background: "#dc2626",
         pct,
       };
     }
     return {
-      label: `${livePassCount}/${liveTotalCount} checks passing`,
+      label: t("missionDetail.status.passing", {
+        passed: livePassCount,
+        total: liveTotalCount,
+      }),
       color: "#fbbf24",
       background: "#d97706",
+      pct,
+    };
+
       pct,
     };
   }
@@ -209,7 +231,7 @@ export default function MissionDetail() {
       setTestResults([...resultCollector]);
     };
 
-    addResult({ phase: "info", message: "🔍 Running validation checks..." });
+    addResult({ phase: "info", message: t("missionDetail.terminal.runningChecks") });
     await delay(400);
 
     const result = await runTests(code, mission);
@@ -222,7 +244,7 @@ export default function MissionDetail() {
     addResult({ phase: "summary", message: result.summary });
 
     if (result.allPassed) {
-      if (showToast) showToast("Mission Parameters Validated!", "success");
+      if (showToast) showToast(t("missionDetail.toasts.validated"), "success");
       await delay(500);
       state = loadProgress();
       const newState = completeMission(state, missionId, mission.xpReward);
@@ -239,22 +261,31 @@ export default function MissionDetail() {
       } else {
         addResult({
           phase: "info",
-          message: "🏅 Already completed — no additional XP awarded.",
+          message: t("missionDetail.terminal.alreadyCompleted"),
         });
       }
     } else {
-      if (showToast) showToast("Validation failed. Check terminal.", "error");
+      if (showToast) showToast(t("missionDetail.toasts.validationFailed"), "error");
     }
 
     setIsRunning(false);
-  }, [code, mission, missionId, isRunning, showToast]);
+  }, [code, mission, missionId, isRunning, showToast, t]);
 
   const handleHint = () => {
     if (mission?.hints && hintIndex < mission.hints.length - 1) {
       const nextIndex = hintIndex + 1;
       setHintIndex(nextIndex);
-      if (showToast) showToast(`Hint ${nextIndex + 1} unlocked`, "info");
-      logActivity(ACTIVITY_TYPES.HINT_USED, { missionId, hintIndex: nextIndex }, `Used hint ${nextIndex + 1} for ${mission.title}`);
+      if (showToast) {
+        showToast(
+          t("missionDetail.toasts.hintUnlocked", { index: nextIndex + 1 }),
+          "info",
+        );
+      }
+      logActivity(
+        ACTIVITY_TYPES.HINT_USED,
+        { missionId, hintIndex: nextIndex, title: mission.title },
+        `Used hint ${nextIndex + 1} for ${mission.title}`,
+      );
     }
   };
 
@@ -263,19 +294,19 @@ export default function MissionDetail() {
       setCode(mission.template);
       setTestResults([]);
       setHintIndex(-1);
-      if (showToast) showToast("Code reset to template", "warning");
+      if (showToast) showToast(t("missionDetail.toasts.codeReset"), "warning");
     }
   };
 
   const handleShowSolution = () => {
     if (mission?.solution) {
       setCode(mission.solution);
-      if (showToast) showToast("Solution loaded into editor", "info");
+      if (showToast) showToast(t("missionDetail.toasts.solutionLoaded"), "info");
     }
   };
 
   const handleNextMission = () => {
-    const next = getNextMission(missionId);
+    const next = getNextMission(missionId, language);
     if (next) navigate(`/mission/${next.id}`);
     else navigate("/missions");
   };
@@ -298,9 +329,9 @@ export default function MissionDetail() {
   if (!mission) {
     return (
       <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h2>Mission Not Found</h2>
+        <h2>{t("missionDetail.notFound.title")}</h2>
         <p style={{ color: "var(--text-secondary)", marginTop: "1rem" }}>
-          The mission "{missionId}" doesn't exist.
+          {t("missionDetail.notFound.body", { id: missionId })}
         </p>
         <button
           type="button"
@@ -308,13 +339,16 @@ export default function MissionDetail() {
           onClick={() => navigate("/missions")}
           style={{ marginTop: "1.5rem" }}
         >
-          ← Back to Mission Map
+          {t("missionDetail.notFound.back")}
         </button>
       </div>
     );
   }
 
   const sbState = statusBarState();
+  const victoryRank = victoryData
+    ? t(`ranks.${Math.min(Math.max(victoryData.newLevel - 1, 0), MAX_RANK_INDEX)}`)
+    : "";
 
   if (showReplay) {
     return (
@@ -330,8 +364,9 @@ export default function MissionDetail() {
 
   return (
     <MissionErrorBoundary>
+
       {/* Structural view state panel mapping switches via semantic button actions */}
-      <div className="mobile-tabs" role="tablist" aria-label="Mission options">
+      <div className="mobile-tabs" role="tablist" aria-label={t("missionDetail.tabs.ariaLabel")}>
         <button
           type="button"
           role="tab"
@@ -339,7 +374,7 @@ export default function MissionDetail() {
           className={`tab-btn ${activeTab === "story" ? "active" : ""}`}
           onClick={() => setActiveTab("story")}
         >
-          Story
+          {t("missionDetail.tabs.story")}
         </button>
         <button
           type="button"
@@ -348,7 +383,7 @@ export default function MissionDetail() {
           className={`tab-btn ${activeTab === "editor" ? "active" : ""}`}
           onClick={() => setActiveTab("editor")}
         >
-          Editor
+          {t("missionDetail.tabs.editor")}
         </button>
         <button
           type="button"
@@ -357,7 +392,7 @@ export default function MissionDetail() {
           className={`tab-btn ${activeTab === "tests" ? "active" : ""}`}
           onClick={() => setActiveTab("tests")}
         >
-          Tests
+          {t("missionDetail.tabs.tests")}
         </button>
         {isCompleted && hasReplay && (
           <button
@@ -367,8 +402,10 @@ export default function MissionDetail() {
             className={`tab-btn ${activeTab === "replay" ? "active" : ""}`}
             onClick={() => setActiveTab("replay")}
           >
-            📹 Replay
+            📹 {t("missionDetail.tabs.replay")}
           </button>
+        )}
+
         )}
       </div>
 
@@ -382,12 +419,15 @@ export default function MissionDetail() {
         >
           <div style={{ marginBottom: "var(--space-md)" }}>
             <span className={`badge badge-${mission.difficulty}`}>
-              <span className="sr-only">Difficulty: </span>{mission.difficulty}
+
+             <span className="sr-only">{t("missionDetail.difficultyLabel")} </span>{t(`difficulty.${mission.difficulty}`)}
+
             </span>
             <span className="mission-card-xp" style={{ marginLeft: "0.5rem" }}>
-              ⚡ {mission.xpReward} XP
+              {t("missionMap.card.xp", { xp: mission.xpReward })}
             </span>
           </div>
+          {/* Story is localized via the mission data file (Phase 3). */}
           <ReactMarkdown>{mission.story}</ReactMarkdown>
 
           {hintIndex >= 0 && (
@@ -402,7 +442,7 @@ export default function MissionDetail() {
               }}
             >
               <strong style={{ color: "var(--gold)" }}>
-                💡 Hint {hintIndex + 1}:
+                {t("missionDetail.hint.label", { index: hintIndex + 1 })}
               </strong>
               <p
                 style={{
@@ -438,7 +478,7 @@ export default function MissionDetail() {
                 disabled={isRunning}
                 aria-label="Reset working environment code to template state"
               >
-                ↺ Reset
+                {t("missionDetail.editor.reset")}
               </button>
               <button
                 type="button"
@@ -449,7 +489,7 @@ export default function MissionDetail() {
                 }
                 aria-label="Unlock contextual hint description asset"
               >
-                💡 Hint
+                {t("missionDetail.editor.hint")}
               </button>
               <button
                 type="button"
@@ -457,7 +497,7 @@ export default function MissionDetail() {
                 onClick={handleShowSolution}
                 aria-label="Overwrite active workspace with solution code blueprint"
               >
-                👁️ Solution
+                {t("missionDetail.editor.solution")}
               </button>
               <button
                 type="button"
@@ -465,7 +505,7 @@ export default function MissionDetail() {
                 onClick={handleRunTests}
                 disabled={isRunning}
               >
-                {isRunning ? "Running..." : "▶ Run Tests"}
+                {isRunning ? t("missionDetail.editor.running") : t("missionDetail.editor.run")}
               </button>
             </div>
           </div>
@@ -542,7 +582,7 @@ export default function MissionDetail() {
                 |
               </span>
               <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "10.5px" }}>
-                live checks · full suite on Run Tests
+                {t("missionDetail.status.note")}
               </span>
             </div>
           )}
@@ -574,15 +614,28 @@ export default function MissionDetail() {
               ref={terminalBodyRef}
               style={{ flex: 1 }}
             >
-              {testResults.length === 0 ? (
-                <span
-                  className="terminal-line info"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  Click "Run Tests" to validate your code...
-                </span>
-              ) : (
-                testResults.map((r, i) => (
+
+              <div className="terminal-header">
+                <span className="terminal-dot red" />
+                <span className="terminal-dot yellow" />
+                <span className="terminal-dot green" />
+                <span className="terminal-title">{t("missionDetail.terminal.title")}</span>
+              </div>
+              <div
+                className="terminal-body"
+                ref={terminalBodyRef}
+                style={{ flex: 1 }}
+              >
+                {testResults.length === 0 ? (
+                  <span
+                    className="terminal-line info"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {t("missionDetail.terminal.placeholder")}
+                  </span>
+                ) : (
+                  testResults.map((r, i) => (
+     
                   <span
                     key={i}
                     className={`terminal-line ${
@@ -616,10 +669,12 @@ export default function MissionDetail() {
             aria-label="Problem solving archive replay tools"
           >
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>
-              📹 Watch Your Solution Archive
+
+              📹 {t("missionDetail.replay.header")}
+
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              Review your problem-solving process step by step.
+              {t("missionDetail.replay.body")}
             </p>
             <button
               type="button"
@@ -627,7 +682,9 @@ export default function MissionDetail() {
               onClick={handleWatchReplay}
               style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
             >
-              ▶️ Start Replay Simulation
+
+              ▶️ {t("missionDetail.replay.start")}
+
             </button>
           </div>
         )}
@@ -636,20 +693,22 @@ export default function MissionDetail() {
       {/* Victory Modal */}
       {showVictory && victoryData && (
         <div className="modal-overlay" onClick={() => setShowVictory(false)}>
-          <div 
-            className="modal-content" 
+
+          <div
+            className="modal-content"
             onClick={(e) => e.stopPropagation()}
             ref={victoryModalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="victory-modal-heading"
           >
-            <div className="modal-icon" role="img" aria-label="Victory reward gold crown trophy">🏆</div>
-            <h2 id="victory-modal-heading" className="modal-title">Mission Complete!</h2>
+            <div className="modal-icon" role="img" aria-label={t("missionDetail.victory.iconLabel")}>🏆</div>
+            <h2 id="victory-modal-heading" className="modal-title">{t("missionDetail.victory.title")}</h2>
             <p className="modal-message">
-              You&apos;ve successfully completed <strong>{mission.title}</strong>
+              {t("missionDetail.victory.youCompleted")} <strong>{mission.title}</strong>
             </p>
-            <div className="modal-xp">+{victoryData.xp} XP gathered</div>
+            <div className="modal-xp">{t("missionDetail.victory.xpGained", { xp: victoryData.xp })}</div>
+
 
             {victoryData.leveledUp && (
               <p
@@ -659,14 +718,20 @@ export default function MissionDetail() {
                   marginBottom: "1rem",
                 }}
               >
-                🎉 Level Up! You are now Level {victoryData.newLevel} —{" "}
-                {getRankTitle(victoryData.newLevel)}
+                {t("missionDetail.victory.levelUp", {
+                  level: victoryData.newLevel,
+                  rank: victoryRank,
+                })}
               </p>
             )}
 
             {victoryData.newBadges?.length > 0 && (
               <p style={{ color: "var(--gold)", marginBottom: "1rem" }}>
-                🏅 New badge achievement unlocked! Check profile center logs.
+
+                🏅 {victoryData.newBadges.length > 1
+                  ? t("missionDetail.victory.badgeEarnedMany")
+                  : t("missionDetail.victory.badgeEarnedOne")}
+
               </p>
             )}
 
@@ -677,15 +742,19 @@ export default function MissionDetail() {
                 justifyContent: "center",
               }}
             >
+
               <button type="button" className="btn btn-primary" onClick={handleNextMission}>
-                Next Mission Objective →
+                {t("missionDetail.victory.next")}
+
               </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate("/missions")}
               >
-                Return to Mission Map
+
+                {t("missionDetail.victory.map")}
+
               </button>
             </div>
 
@@ -701,8 +770,10 @@ export default function MissionDetail() {
                 gap: "8px",
               }}
             >
+
               <button type="button" onClick={() => openInOkashi(code)} className="okashi-btn">
-                🚀 Try on Okashi — Compile & Deploy
+                {t("missionDetail.okashi.button")}
+
               </button>
 
               <p
@@ -715,9 +786,7 @@ export default function MissionDetail() {
                   lineHeight: "1.5",
                 }}
               >
-                Opens okashi.dev in a new tab. Your code is copied to clipboard
-                — paste it there to compile with the real Soroban compiler and
-                deploy to Testnet.
+                {t("missionDetail.okashi.help")}
               </p>
 
               {toast?.state !== TOAST_STATES.IDLE && (

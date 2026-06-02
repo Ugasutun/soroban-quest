@@ -19,6 +19,12 @@ import { loadProgress, saveProgress } from "./systems/storage";
 import { updateStreak } from "./systems/gameEngine";
 import "./systems/Toast.css";
 
+// 3. Import Language Provider
+//    Placed OUTSIDE the ErrorBoundary so the boundary's fallback
+//    UI can still call useTranslation() when something in the tree throws.
+import { LanguageProvider } from "./i18n";
+
+export default function App() {
 // Lazy load page components
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -32,13 +38,17 @@ export default function App() {
   const location = useLocation();
 
   return (
-    <ErrorBoundary>
-      <ToastProvider>
+
+    <LanguageProvider>
+      <ErrorBoundary>
+       {/* 3. Wraped everything in ToastProvider */}
+       <ToastProvider>
         <ScrollToTop />
         <div className="app">
           <Navbar />
           <main className="main-content">
             <Suspense fallback={<LoadingScreen />}>
+
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/missions" element={<MissionMap />} />
@@ -49,11 +59,13 @@ export default function App() {
                 <Route path="/skills" element={<SkillTree />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+
             </Suspense>
           </main>
           <Footer />
         </div>
       </ToastProvider>
     </ErrorBoundary>
+  </LanguageProvider>
   );
 }
