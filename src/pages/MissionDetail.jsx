@@ -17,7 +17,6 @@ import CodeRecorder from "../systems/codeRecorder";
 import { useTranslation } from "../i18n/useTranslation";
 import useDocumentTitle from '../systems/useDocumentTitle';
 
-// ─── Monaco marker model name (must be consistent across calls) ──────────────
 const LIVE_MARKER_OWNER = "soroban-quest-live";
 const MAX_RANK_INDEX = 10;
 
@@ -28,7 +27,6 @@ export default function MissionDetail() {
   const { t, language } = useTranslation();
   const mission = getMissionById(missionId, language);
 
-  // Safe fallback in case ToastContext is not provided
   const toastContext = useToast();
   const showToast = toastContext?.showToast;
 
@@ -43,18 +41,18 @@ export default function MissionDetail() {
   const [showReplay, setShowReplay] = useState(false);
   const [replayData, setReplayData] = useState(null);
 
-  // Live validation state
   const [livePassCount, setLivePassCount] = useState(0);
   const [liveTotalCount, setLiveTotalCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("story"); // Handles clean custom tab interaction states safely
 
   const terminalBodyRef = useRef(null);
-  const editorRef = useRef(null);       // Monaco editor instance
-  const monacoRef = useRef(null);       // Monaco global (for setModelMarkers)
-  const validatorRef = useRef(null);    // Debounced validator handle
+  const editorRef = useRef(null);      
+  const monacoRef = useRef(null);      
+  const validatorRef = useRef(null);    
+  const victoryModalRef = useRef(null);
 
   const { openInOkashi, toast } = useokashi();
 
-  // Compute replay & completion state
   const progressState = loadProgress();
   const isCompleted = progressState.completedMissions.includes(missionId);
   const hasReplay = CodeRecorder.hasRecording(missionId);
@@ -70,6 +68,7 @@ export default function MissionDetail() {
         setShowVictory(false);
         setLivePassCount(0);
         setLiveTotalCount(0);
+        setActiveTab("story");
         setLoading(false);
         // Keep stored message in English for log durability; Journal will
         // re-compose the displayed string via t() at render time using `data`.
@@ -84,14 +83,14 @@ export default function MissionDetail() {
     }
   }, [missionId, mission]);
 
-  // --------------------------- Auto-scroll terminal ---------------------------
+  // Auto-scroll terminal
   useEffect(() => {
     if (terminalBodyRef.current) {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
     }
   }, [testResults]);
 
-  // ─── Set up debounced validator once ────────────────────────────────────────
+  // Set up debounced validator once
   useEffect(() => {
     const validator = createDebouncedValidator(500, (result) => {
       setLivePassCount(result.passCount);
@@ -107,13 +106,47 @@ export default function MissionDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Re-run live validation when code or mission changes ────────────────────
+  // Focus Trapping for the Victory Modal attached directly to Local Element Context instead of Window
+  useEffect(() => {
+    if (!showVictory || !victoryModalRef.current) return;
+
+    const modalElement = victoryModalRef.current;
+    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = modalElement.querySelectorAll(focusableSelectors);
+    
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement.focus();
+
+    const handleKeyDown = (e) => {
+      if (e.key !== "Tab") return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    modalElement.addEventListener("keydown", handleKeyDown);
+    return () => modalElement.removeEventListener("keydown", handleKeyDown);
+  }, [showVictory]);
+
+  // Re-run live validation when code or mission changes
   useEffect(() => {
     if (!mission || loading) return;
     validatorRef.current?.call(code, mission);
   }, [code, mission, loading]);
 
-  // ─── Monaco helpers ─────────────────────────────────────────────────────────
   const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -136,13 +169,12 @@ export default function MissionDetail() {
     if (model) monaco.editor.setModelMarkers(model, LIVE_MARKER_OWNER, []);
   }
 
-  // ─── Status bar helpers ──────────────────────────────────────────────────────
   function statusBarState() {
     if (liveTotalCount === 0) {
       return {
         label: t("missionDetail.status.checking"),
         color: "var(--text-muted)",
-        barColor: "rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.08)",
         pct: 0,
       };
     }
@@ -154,7 +186,19 @@ export default function MissionDetail() {
           total: liveTotalCount,
         }),
         color: "#34d399",
-        barColor: "#059669",
+        background: "#059669",
+        pct,
+      };
+    }
+
+    if (livePassCount === 0) {
+      return {
+        label: t("missionDetail.status.passing", {
+          passed: livePassCount,
+          total: liveTotalCount,
+        }),
+        color: "#f87171",
+        background: "#dc2626",
         pct,
       };
     }
@@ -163,13 +207,15 @@ export default function MissionDetail() {
         passed: livePassCount,
         total: liveTotalCount,
       }),
-      color: livePassCount === 0 ? "#f87171" : "#fbbf24",
-      barColor: livePassCount === 0 ? "#dc2626" : "#d97706",
+      color: "#fbbf24",
+      background: "#d97706",
+      pct,
+    };
+
       pct,
     };
   }
 
-  // --------------------------- Run Tests ---------------------------
   const handleRunTests = useCallback(async () => {
     if (isRunning || !mission) return;
     setIsRunning(true);
@@ -225,7 +271,6 @@ export default function MissionDetail() {
     setIsRunning(false);
   }, [code, mission, missionId, isRunning, showToast, t]);
 
-  // --------------------------- Hints ---------------------------
   const handleHint = () => {
     if (mission?.hints && hintIndex < mission.hints.length - 1) {
       const nextIndex = hintIndex + 1;
@@ -244,7 +289,6 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Reset ---------------------------
   const handleReset = () => {
     if (mission?.template) {
       setCode(mission.template);
@@ -254,7 +298,6 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Show Solution ---------------------------
   const handleShowSolution = () => {
     if (mission?.solution) {
       setCode(mission.solution);
@@ -262,14 +305,12 @@ export default function MissionDetail() {
     }
   };
 
-  // --------------------------- Navigate to Next Mission ---------------------------
   const handleNextMission = () => {
     const next = getNextMission(missionId, language);
     if (next) navigate(`/mission/${next.id}`);
     else navigate("/missions");
   };
 
-  // --------------------------- Replay Functions ---------------------------
   const handleWatchReplay = () => {
     const recording = CodeRecorder.loadRecording(missionId);
     if (recording) {
@@ -283,10 +324,8 @@ export default function MissionDetail() {
     setReplayData(null);
   };
 
-  // --------------------------- Loading Skeleton ---------------------------
   if (loading) return <MissionDetailSkeleton />;
 
-  // --------------------------- Mission Not Found ---------------------------
   if (!mission) {
     return (
       <div style={{ padding: "4rem", textAlign: "center" }}>
@@ -295,6 +334,7 @@ export default function MissionDetail() {
           {t("missionDetail.notFound.body", { id: missionId })}
         </p>
         <button
+          type="button"
           className="btn btn-primary"
           onClick={() => navigate("/missions")}
           style={{ marginTop: "1.5rem" }}
@@ -310,7 +350,6 @@ export default function MissionDetail() {
     ? t(`ranks.${Math.min(Math.max(victoryData.newLevel - 1, 0), MAX_RANK_INDEX)}`)
     : "";
 
-  // --------------------------- Render Mission Detail ---------------------------
   if (showReplay) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -325,49 +364,64 @@ export default function MissionDetail() {
 
   return (
     <MissionErrorBoundary>
-      <input
-        type="radio"
-        name="mission-tab"
-        id="tab-story"
-        className="tab-radio"
-        defaultChecked
-      />
-      <input
-        type="radio"
-        name="mission-tab"
-        id="tab-editor"
-        className="tab-radio"
-      />
-      <input
-        type="radio"
-        name="mission-tab"
-        id="tab-tests"
-        className="tab-radio"
-      />
-      {isCompleted && hasReplay && (
-        <input
-          type="radio"
-          name="mission-tab"
-          id="tab-replay"
-          className="tab-radio"
-        />
-      )}
 
-      <div className="mobile-tabs">
-        <label htmlFor="tab-story">{t("missionDetail.tabs.story")}</label>
-        <label htmlFor="tab-editor">{t("missionDetail.tabs.editor")}</label>
-        <label htmlFor="tab-tests">{t("missionDetail.tabs.tests")}</label>
+      {/* Structural view state panel mapping switches via semantic button actions */}
+      <div className="mobile-tabs" role="tablist" aria-label={t("missionDetail.tabs.ariaLabel")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "story"}
+          className={`tab-btn ${activeTab === "story" ? "active" : ""}`}
+          onClick={() => setActiveTab("story")}
+        >
+          {t("missionDetail.tabs.story")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "editor"}
+          className={`tab-btn ${activeTab === "editor" ? "active" : ""}`}
+          onClick={() => setActiveTab("editor")}
+        >
+          {t("missionDetail.tabs.editor")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "tests"}
+          className={`tab-btn ${activeTab === "tests" ? "active" : ""}`}
+          onClick={() => setActiveTab("tests")}
+        >
+          {t("missionDetail.tabs.tests")}
+        </button>
         {isCompleted && hasReplay && (
-          <label htmlFor="tab-replay">{t("missionDetail.tabs.replay")}</label>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "replay"}
+            className={`tab-btn ${activeTab === "replay" ? "active" : ""}`}
+            onClick={() => setActiveTab("replay")}
+          >
+            📹 {t("missionDetail.tabs.replay")}
+          </button>
+        )}
+
         )}
       </div>
 
-      <div className="mission-detail">
+      <div id="main-content" className={`mission-detail active-tab-${activeTab}`}>
         {/* ---------------- Story Panel ---------------- */}
-        <div className="mission-story">
+        <div 
+          className="mission-story" 
+          role="region" 
+          aria-label="Mission briefing and story description"
+          style={{ display: activeTab === "story" ? "block" : "none" }}
+        >
           <div style={{ marginBottom: "var(--space-md)" }}>
             <span className={`badge badge-${mission.difficulty}`}>
-              {t(`difficulty.${mission.difficulty}`)}
+
+             <span className="sr-only">{t("missionDetail.difficultyLabel")} </span>{t(`difficulty.${mission.difficulty}`)}
+
             </span>
             <span className="mission-card-xp" style={{ marginLeft: "0.5rem" }}>
               {t("missionMap.card.xp", { xp: mission.xpReward })}
@@ -378,6 +432,7 @@ export default function MissionDetail() {
 
           {hintIndex >= 0 && (
             <div
+              role="alert"
               style={{
                 marginTop: "var(--space-lg)",
                 padding: "var(--space-md)",
@@ -403,37 +458,49 @@ export default function MissionDetail() {
         </div>
 
         {/* ---------------- Editor Panel ---------------- */}
-        <div className="mission-editor-panel">
+        <div 
+          className="mission-editor-panel" 
+          role="region" 
+          aria-label="Code submission workspace"
+          style={{ display: activeTab === "editor" ? "flex" : "none" }}
+        >
           <div className="mission-editor-toolbar">
             <div className="mission-editor-toolbar-left">
-              <div className="editor-file-tab">
-                <span className="dot" /> lib.rs
+              <div className="editor-file-tab" aria-label="Active context tab file: lib.rs">
+                <span className="dot" aria-hidden="true" /> lib.rs
               </div>
             </div>
             <div className="mission-editor-toolbar-right">
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleReset}
                 disabled={isRunning}
+                aria-label="Reset working environment code to template state"
               >
                 {t("missionDetail.editor.reset")}
               </button>
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleHint}
                 disabled={
                   !mission.hints || hintIndex >= mission.hints.length - 1
                 }
+                aria-label="Unlock contextual hint description asset"
               >
                 {t("missionDetail.editor.hint")}
               </button>
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={handleShowSolution}
+                aria-label="Overwrite active workspace with solution code blueprint"
               >
                 {t("missionDetail.editor.solution")}
               </button>
               <button
+                type="button"
                 className="btn btn-primary btn-sm"
                 onClick={handleRunTests}
                 disabled={isRunning}
@@ -443,7 +510,7 @@ export default function MissionDetail() {
             </div>
           </div>
 
-          <div className="editor-wrapper">
+          <div className="editor-wrapper" aria-label="Monaco code compilation editor interface">
             <Editor
               height="100%"
               defaultLanguage="rust"
@@ -469,7 +536,7 @@ export default function MissionDetail() {
             />
           </div>
 
-          {/* ── Live Validation Status Bar ─────────────────────────────────── */}
+          {/* Live Validation Status Bar */}
           {liveTotalCount > 0 && (
             <div
               style={{
@@ -484,22 +551,25 @@ export default function MissionDetail() {
                 fontFamily: "'JetBrains Mono', monospace",
                 userSelect: "none",
               }}
+              role="status"
+              aria-label="Live typing test checker tracker status panel"
             >
               <div
                 style={{
-                  flex: 1,
+                  width: "100%",
                   height: "4px",
                   borderRadius: "2px",
                   background: "rgba(255,255,255,0.08)",
                   overflow: "hidden",
                   maxWidth: "120px",
                 }}
+                aria-hidden="true"
               >
                 <div
                   style={{
                     height: "100%",
                     width: `${sbState.pct}%`,
-                    background: sbState.barColor,
+                    background: sbState.background,
                     borderRadius: "2px",
                     transition: "width 0.3s ease, background 0.3s ease",
                   }}
@@ -508,7 +578,7 @@ export default function MissionDetail() {
               <span style={{ color: sbState.color, transition: "color 0.3s" }}>
                 {sbState.label}
               </span>
-              <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px" }}>
+              <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px" }} aria-hidden="true">
                 |
               </span>
               <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "10.5px" }}>
@@ -516,17 +586,35 @@ export default function MissionDetail() {
               </span>
             </div>
           )}
+        </div>
 
-          {/* ---------------- Terminal Panel ---------------- */}
-          <div className="mission-terminal-panel">
+        {/* ---------------- Terminal Panel ---------------- */}
+        <div 
+          className="mission-terminal-panel" 
+          role="region" 
+          aria-label="Validation execution test terminal log terminal"
+          style={{ display: activeTab === "tests" ? "block" : "none" }}
+        >
+          <div
+            className="terminal"
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div className="terminal-header">
+              <span className="terminal-dot red" aria-hidden="true" />
+              <span className="terminal-dot yellow" aria-hidden="true" />
+              <span className="terminal-dot green" aria-hidden="true" />
+              <span className="terminal-title">Test Output Log</span>
+            </div>
             <div
-              className="terminal"
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
+              className="terminal-body"
+              ref={terminalBodyRef}
+              style={{ flex: 1 }}
             >
+
               <div className="terminal-header">
                 <span className="terminal-dot red" />
                 <span className="terminal-dot yellow" />
@@ -547,61 +635,80 @@ export default function MissionDetail() {
                   </span>
                 ) : (
                   testResults.map((r, i) => (
-                    <span
-                      key={i}
-                      className={`terminal-line ${
-                        r.passed === true
-                          ? "pass"
-                          : r.passed === false
-                          ? "fail"
-                          : "info"
-                      }`}
-                    >
-                      {r.message}
-                    </span>
-                  ))
-                )}
-              </div>
+     
+                  <span
+                    key={i}
+                    className={`terminal-line ${
+                      r.passed === true
+                        ? "pass"
+                        : r.passed === false
+                        ? "fail"
+                        : "info"
+                    }`}
+                  >
+                    {r.message}
+                  </span>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* ---------------- Replay Panel ---------------- */}
         {isCompleted && hasReplay && (
-          <div className="mission-replay-panel" style={{
-            display: 'none',
-            padding: '2rem',
-            textAlign: 'center',
-            background: 'var(--bg-secondary)',
-            borderTop: '1px solid var(--border-subtle)'
-          }}>
+          <div 
+            className="mission-replay-panel" 
+            style={{
+              display: activeTab === "replay" ? "block" : "none",
+              padding: '2rem',
+              textAlign: 'center',
+              background: 'var(--bg-secondary)',
+              borderTop: '1px solid var(--border-subtle)'
+            }} 
+            role="region" 
+            aria-label="Problem solving archive replay tools"
+          >
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>
-              {t("missionDetail.replay.header")}
+
+              📹 {t("missionDetail.replay.header")}
+
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               {t("missionDetail.replay.body")}
             </p>
             <button
+              type="button"
               className="btn btn-primary"
               onClick={handleWatchReplay}
               style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
             >
-              {t("missionDetail.replay.start")}
+
+              ▶️ {t("missionDetail.replay.start")}
+
             </button>
           </div>
         )}
       </div>
 
-      {/* ---------------- Victory Modal ---------------- */}
+      {/* Victory Modal */}
       {showVictory && victoryData && (
         <div className="modal-overlay" onClick={() => setShowVictory(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">🏆</div>
-            <h2 className="modal-title">{t("missionDetail.victory.title")}</h2>
+
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            ref={victoryModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="victory-modal-heading"
+          >
+            <div className="modal-icon" role="img" aria-label={t("missionDetail.victory.iconLabel")}>🏆</div>
+            <h2 id="victory-modal-heading" className="modal-title">{t("missionDetail.victory.title")}</h2>
             <p className="modal-message">
               {t("missionDetail.victory.youCompleted")} <strong>{mission.title}</strong>
             </p>
             <div className="modal-xp">{t("missionDetail.victory.xpGained", { xp: victoryData.xp })}</div>
+
 
             {victoryData.leveledUp && (
               <p
@@ -620,9 +727,11 @@ export default function MissionDetail() {
 
             {victoryData.newBadges?.length > 0 && (
               <p style={{ color: "var(--gold)", marginBottom: "1rem" }}>
-                {victoryData.newBadges.length > 1
+
+                🏅 {victoryData.newBadges.length > 1
                   ? t("missionDetail.victory.badgeEarnedMany")
                   : t("missionDetail.victory.badgeEarnedOne")}
+
               </p>
             )}
 
@@ -633,22 +742,27 @@ export default function MissionDetail() {
                 justifyContent: "center",
               }}
             >
-              <button className="btn btn-primary" onClick={handleNextMission}>
+
+              <button type="button" className="btn btn-primary" onClick={handleNextMission}>
                 {t("missionDetail.victory.next")}
+
               </button>
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate("/missions")}
               >
+
                 {t("missionDetail.victory.map")}
+
               </button>
             </div>
 
-            {/* Okashi Button & Toast */}
+            {/* Okashi Section */}
             <div
               style={{
                 marginTop: "1.25rem",
-                paddingTop: "1.25rem",
+                padding: "1.25rem",
                 borderTop: "1px solid rgba(255,255,255,0.08)",
                 display: "flex",
                 flexDirection: "column",
@@ -656,8 +770,10 @@ export default function MissionDetail() {
                 gap: "8px",
               }}
             >
-              <button onClick={() => openInOkashi(code)} className="okashi-btn">
+
+              <button type="button" onClick={() => openInOkashi(code)} className="okashi-btn">
                 {t("missionDetail.okashi.button")}
+
               </button>
 
               <p

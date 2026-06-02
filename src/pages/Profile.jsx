@@ -28,7 +28,6 @@ export default function Profile() {
   useDocumentTitle('Profile');
   const { t, language } = useTranslation();
   const [state, setState] = useState(loadProgress());
-
   const [profile, setProfile] = useState(() => loadProfile());
 
   const [editing, setEditing] = useState(false);
@@ -106,19 +105,27 @@ export default function Profile() {
   );
 
   return (
-    <div className="profile-page">
+    <div id="main-content" className="profile-page">
       {/* HEADER */}
       <div className="profile-header">
         {/* AVATAR */}
-        <div className="profile-avatar text-5xl">{profile.avatar}</div>
+        <div className="profile-avatar text-5xl" role="img" aria-label={`Active avatar character: ${profile.avatar}`}>
+          {profile.avatar}
+        </div>
 
         {/* INFO */}
         <div className="profile-info" style={{ flex: 1 }}>
-          <h1 className="profile-name">{profile.name}</h1>
+          <h1 className="profile-name">
+            <span className="sr-only">Adventurer Name: </span>
+            {profile.name}
+          </h1>
 
-          <div className="profile-rank">{rankTitle}</div>
+          <div className="profile-rank">
+            <span className="sr-only">Rank Title: </span>
+            {rankTitle}
+          </div>
 
-          <div className="xp-bar-container">
+          <div className="xp-bar-container" aria-label={`XP progress bar: ${xpProgress.percentage}% complete`}>
             <div className="xp-bar-track">
               <div
                 className="xp-bar-fill"
@@ -139,17 +146,24 @@ export default function Profile() {
 
           {/* ACTIONS */}
           <div className="flex gap-2 mt-3">
-            <button className="btn btn-secondary" onClick={openEdit}>
+
+            <button type="button" className="btn btn-secondary" onClick={openEdit}>
               {t("profile.edit")}
             </button>
             <Link to="/journal" className="btn btn-ghost">
               {t("profile.viewJournal")}
             </Link>
+
+            </Link>
           </div>
         </div>
 
         {/* STATS */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          role="region"
+          aria-label="Adventurer stats dashboard"
+        >
           <div className="card">
             <div style={{ fontSize: "1.3rem", fontWeight: 800 }}>
               {state.completedMissions.length}
@@ -172,9 +186,54 @@ export default function Profile() {
 
       {/* EDIT PANEL */}
       {editing && (
-        <div className="card mt-4">
-          <h3 className="mb-3">{t("profile.editPanel.title")}</h3>
 
+        <div className="card mt-4" role="form" aria-labelledby="edit-profile-heading">
+          <h3 id="edit-profile-heading" className="mb-3">{t("profile.editPanel.title")}</h3>
+
+          {/* NAME */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label htmlFor="profile-name-edit-input" className="text-sm font-semibold">
+              {t("profile.editPanel.nameLabel")}
+            </label>
+            <input
+              id="profile-name-edit-input"
+              className="w-full p-2 mb-3 rounded"
+              style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("profile.editPanel.namePlaceholder")}
+            />
+          </div>
+
+          {/* AVATARS */}
+          <fieldset className="mb-3" style={{ border: "none", padding: 0, margin: 0 }}>
+            <legend className="text-sm font-semibold mb-2">{t("profile.editPanel.avatarLegend")}</legend>
+            <div className="grid grid-cols-6 gap-2">
+              {avatars.map((a) => (
+                <button
+                  type="button"
+                  key={a}
+                  onClick={() => setAvatar(a)}
+                  className="text-2xl p-2 rounded transition"
+                  aria-label={t("profile.aria.selectAvatar", { avatar: a })}
+                  aria-pressed={avatar === a}
+                  style={{
+                    backgroundColor: avatar === a ? "var(--cyan-dim)" : "var(--bg-glass)",
+                    transform: avatar === a ? "scale(1.1)" : "none",
+                  }}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+
+          {/* ACTIONS */}
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-primary" onClick={saveUserProfile}>
+              Save Profile Changes
+=======
           {/* NAME INPUT */}
           <input
             className="profile-input-full"
@@ -219,6 +278,11 @@ export default function Profile() {
             <button className="btn btn-ghost" onClick={() => setEditing(false)}>
               {t("common.cancel")}
             </button>
+
+            <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
+              Cancel Changes
+
+            </button>
           </div>
         </div>
       )}
@@ -226,7 +290,7 @@ export default function Profile() {
       {/* BADGES */}
       <h2 className="profile-section-title">{t("profile.sections.badges")}</h2>
 
-      <div className="profile-badges-grid">
+      <div className="profile-badges-grid" role="region" aria-label="Badges progression collection">
         {BADGES.map((badge) => {
           const earned = state.badges.includes(badge.id);
 
@@ -234,21 +298,39 @@ export default function Profile() {
             <div
               key={badge.id}
               className={`profile-badge-card ${earned ? "earned" : "locked"}`}
+              aria-label={`Badge record: ${badge.name}. Description: ${badge.description}. Status: ${earned ? 'Earned' : 'Locked'}`}
             >
-              <div className="profile-badge-icon">{badge.icon}</div>
-              <div className="profile-badge-info">
+
+             <div className="profile-badge-icon" aria-hidden="true">{badge.icon}</div>
+              <div className="profile-badge-info" aria-hidden="true">
                 <h4>{t(`badges.${badge.id}.name`)}</h4>
                 <p>{t(`badges.${badge.id}.description`)}</p>
+
               </div>
             </div>
           );
         })}
       </div>
 
+
       {/* MISSIONS */}
-      <h2 className="profile-section-title">
-        {t("profile.sections.completedMissions")}
-      </h2>
+      <h2 className="profile-section-title">{t("profile.sections.completedMissions")}</h2>
+      <div className="flex flex-col gap-2" role="region" aria-label={t("profile.aria.completedListing")}>
+        {completedMissions.length === 0 ? (
+          <div className="card text-center p-6" role="status">{t("profile.noMissions")}</div>
+        ) : (
+          completedMissions.map((m) => (
+            <div key={m.id} className="card flex justify-between" aria-label={t("profile.aria.completedEntry", { title: m.title, xp: m.xpReward })}>
+              <span aria-hidden="true">{m.title}</span>
+              <span className="text-gold" aria-hidden="true">+{m.xpReward} XP</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* DATA */}
+      <h2 className="profile-section-title">{t("profile.sections.data")}</h2>
+
 
       {completedMissions.length === 0 ? (
         <div className="card text-center p-6">{t("profile.noMissions")}</div>
@@ -261,37 +343,45 @@ export default function Profile() {
         ))
       )}
 
-      {/* DATA */}
-      <h2 className="profile-section-title">{t("profile.sections.data")}</h2>
 
-      <div className="profile-actions">
+            <div className="profile-actions">
         <button className="btn btn-secondary" onClick={handleExport}>
           {t("profile.data.export")}
+
+      <div className="profile-actions" role="group" aria-label="Game progress backup controls">
+        <button type="button" className="btn btn-secondary" onClick={handleExport}>
+          Export Progress File
+
         </button>
 
         <button
+          type="button"
           className="btn btn-secondary"
           onClick={() => fileInputRef.current?.click()}
         >
+
           {t("profile.data.import")}
         </button>
-
-        <button
-          className="btn btn-ghost"
-          style={{ color: "var(--red)" }}
-          onClick={handleReset}
-        >
+        <button type="button" className="btn btn-ghost" style={{ color: "var(--red)" }} onClick={handleReset}>
           {t("profile.data.reset")}
+        </button>
+
         </button>
 
         <input
           ref={fileInputRef}
           type="file"
+          id="progress-import-hidden-file"
           accept=".json"
           hidden
           onChange={handleImport}
+          aria-label="Hidden file progress backup uploader tool"
         />
       </div>
+
+      {importStatus && (
+        <p className="mt-3 text-sm text-gray-400" role="status">{importStatus}</p>
+      )}
     </div>
   );
 }
