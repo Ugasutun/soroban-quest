@@ -3,25 +3,42 @@
    with lore, progression gates, hero images
    ========================================== */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
-import { missions } from "../data/missions.js";
-import { campaigns, getCampaignProgress } from "../data/campaigns.js";
+import { missions, localizeMissions } from "../data/missions.js";
+import { campaigns, localizeCampaigns, getCampaignProgress } from "../data/campaigns.js";
 import { loadProgress } from "../systems/storage.js";
 import { isMissionUnlocked } from "../systems/missionLoader.js";
+import { useTranslation } from "../i18n/useTranslation";
 
 import "./Campaigns.css";
 import useDocumentTitle from '../systems/useDocumentTitle';
 
 export default function Campaigns() {
+  const { t, language } = useTranslation();
   useDocumentTitle('Campaigns');
   const [progress, setProgress] = useState(loadProgress());
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [showLoreModal, setShowLoreModal] = useState(false);
   const [firstVisit, setFirstVisit] = useState(false);
 
+
+  const localizedCampaigns = useMemo(
+    () => localizeCampaigns(campaigns, language),
+    [language],
+  );
+  const localizedMissions = useMemo(
+    () => localizeMissions(missions, language),
+    [language],
+  );
+  const selectedCampaign = useMemo(
+    () => localizedCampaigns.find((c) => c.id === selectedCampaignId) || null,
+    [localizedCampaigns, selectedCampaignId],
+  );
   const loreModalRef = useRef(null);
+
 
   useEffect(() => {
     const handleStorageChange = () => setProgress(loadProgress());
@@ -72,7 +89,7 @@ export default function Campaigns() {
       setFirstVisit(true);
       setShowLoreModal(true);
     }
-    setSelectedCampaign(campaign);
+    setSelectedCampaignId(campaign.id);
   };
 
   const closeModal = () => {
@@ -89,15 +106,18 @@ export default function Campaigns() {
   return (
     <div id="main-content" className="campaigns-page">
       <div className="page-header">
-        <h1 className="section-title">Campaigns</h1>
+        <h1 className="section-title">{t("campaigns.title")}</h1>
         <p className="section-subtitle">
-          Epic story-driven chapters | Level {currentLevel} |{" "}
-          {progress.completedMissions.length}/{missions.length} total missions
+          {t("campaigns.subtitle", {
+            level: currentLevel,
+            completed: progress.completedMissions.length,
+            total: missions.length,
+          })}
         </p>
       </div>
 
       <div className="campaigns-grid">
-        {campaigns.map((campaign) => {
+        {localizedCampaigns.map((campaign) => {
           const stats = getCampaignProgress(
             campaign.id,
             progress.completedMissions,
@@ -127,8 +147,10 @@ export default function Campaigns() {
                   borderTop: `4px solid ${unlocked ? `var(--${campaign.color})` : "var(--border-subtle)"}`,
                 }}
               >
-                <div className="campaign-badge" aria-hidden="true">
-                  Chapter {campaign.chapterNumber}
+
+                 <div className="campaign-badge" aria-hidden="true">
+                  {t("campaigns.chapter", { number: campaign.chapterNumber })}
+
                 </div>
               </div>
 
@@ -138,7 +160,10 @@ export default function Campaigns() {
 
                 <div className="campaign-progress" aria-label={`Chapter progress: ${stats.percentage}% complete`}>
                   <div className="progress-label">
-                    {stats.completed}/{stats.total} missions
+                    {t("campaigns.missionCount", {
+                      completed: stats.completed,
+                      total: stats.total,
+                    })}
                   </div>
                   <div className="xp-bar-container">
                     <div className="xp-bar-track">
@@ -152,13 +177,19 @@ export default function Campaigns() {
 
                 {!unlocked && (
                   <div className="campaign-lock">
-                    <span className="sr-only">Status: </span>🔒 Reach Level {campaign.requiredLevel} to unlock
+
+                    <span className="sr-only">{t("campaigns.statusLabel")} </span>
+                    {t("campaigns.lockedAt", { level: campaign.requiredLevel })}
+
                   </div>
                 )}
 
                 {completed && (
                   <div className="campaign-status completed">
-                    <span className="sr-only">Status: </span>✓ Chapter Complete!
+
+                   <span className="sr-only">{t("campaigns.statusLabel")} </span>
+                    {t("campaigns.chapterComplete")}
+
                   </div>
                 )}
               </div>
@@ -173,29 +204,29 @@ export default function Campaigns() {
             <button
               type="button"
               className="detail-back"
-              onClick={() => setSelectedCampaign(null)}
+              onClick={() => setSelectedCampaignId(null)}
             >
-              ← Back to Campaigns List
+              {t("campaigns.back")}
             </button>
 
             <div className="detail-header">
               <h2>{selectedCampaign.title}</h2>
               <div className="detail-stats">
                 <span>
-                  {
-                    getCampaignProgress(
+                  {t("campaigns.completeOf", {
+                    completed: getCampaignProgress(
                       selectedCampaign.id,
                       progress.completedMissions,
-                    ).completed
-                  }
-                  /{selectedCampaign.missionIds.length} Complete
+                    ).completed,
+                    total: selectedCampaign.missionIds.length,
+                  })}
                 </span>
               </div>
             </div>
 
             <div className="missions-list" role="list" aria-label="Missions included in this campaign chapter">
               {selectedCampaign.missionIds.map((missionId) => {
-                const mission = missions.find((m) => m.id === missionId);
+                const mission = localizedMissions.find((m) => m.id === missionId);
                 if (!mission) return null;
 
                 const missionCompleted =
@@ -213,10 +244,12 @@ export default function Campaigns() {
                     role="listitem"
                     aria-label={`Mission ${mission.order}: ${mission.title}. Difficulty: ${mission.difficulty}.${missionCompleted ? " Completed." : !missionUnlocked ? " Locked." : " Unlocked."}`}
                   >
+
                     <div className="mission-order" aria-hidden="true">#{mission.order}</div>
                     <div className="mission-title" aria-hidden="true">{mission.title}</div>
                     <div className={`mission-badge badge-${mission.difficulty}`} aria-hidden="true">
-                      {mission.difficulty}
+                      {t(`difficulty.${mission.difficulty}`)}
+
                     </div>
                     {missionCompleted ? (
                       <span className="mission-status" aria-hidden="true">✓</span>
@@ -233,21 +266,25 @@ export default function Campaigns() {
 
       {showLoreModal && selectedCampaign && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div 
-            className="modal-content" 
+
+          <div
+            className="modal-content"
             onClick={(e) => e.stopPropagation()}
             ref={loreModalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="lore-modal-title"
           >
-            <div className="modal-icon" role="img" aria-label="Scroll scroll artifact icon">📜</div>
-            <h2 id="lore-modal-title" className="modal-title">Chapter Introduction</h2>
+            <div className="modal-icon" role="img" aria-label={t("campaigns.lore.iconLabel")}>📜</div>
+            <h2 id="lore-modal-title" className="modal-title">{t("campaigns.lore.modalTitle")}</h2>
             <div className="modal-lore">
               <ReactMarkdown>{selectedCampaign.lore}</ReactMarkdown>
             </div>
             <button type="button" className="btn btn-primary" onClick={closeModal}>
-              Begin Chapter {selectedCampaign.chapterNumber}
+              {t("campaigns.lore.beginChapter", {
+                number: selectedCampaign.chapterNumber,
+              })}
+            </button>
             </button>
           </div>
         </div>
