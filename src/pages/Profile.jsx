@@ -1,9 +1,7 @@
 import React, { useState, useRef } from "react";
-// Import the fixed custom layout definitions directly
-import "./Profile.css";
-import { useToast } from '../systems/ToastContext';
-
 import { Link } from "react-router-dom";
+import "./Profile.css";
+
 import {
   loadProgress,
   importProgress,
@@ -16,6 +14,9 @@ import {
 import { getXPProgress, BADGES } from "../systems/gameEngine";
 import { getAllMissions } from "../systems/missionLoader";
 import { avatars } from "../data/avatars";
+
+// Hooks and Utilities
+import { useToast } from "../systems/ToastContext";
 import { logActivity, ACTIVITY_TYPES } from "../systems/activityLogger";
 import useDocumentTitle from '../systems/useDocumentTitle';
 import { useTranslation } from "../i18n/useTranslation";
@@ -24,16 +25,19 @@ import { useTranslation } from "../i18n/useTranslation";
 const MAX_RANK_INDEX = 10;
 
 export default function Profile() {
-  const { showToast } = useToast();
   useDocumentTitle('Profile');
+  const { showToast } = useToast();
   const { t, language } = useTranslation();
   const [state, setState] = useState(loadProgress());
+
+  // Safe profile initialization
   const [profile, setProfile] = useState(() => loadProfile());
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile.name || "");
   const [avatar, setAvatar] = useState(profile.avatar || "🛡️");
 
+  const [importStatus, setImportStatus] = useState("");
   const fileInputRef = useRef(null);
 
   const xpProgress = getXPProgress(state);
@@ -51,9 +55,9 @@ export default function Profile() {
     saveProfile(updated);
     setProfile(updated);
     setEditing(false);
-    
-    // Wire up success notification
-    showToast("Profile credentials synchronized!", "success");
+
+    // Trigger global success toast alert
+    showToast("Profile layout saved successfully!", "success");
   };
 
   const openEdit = () => {
@@ -65,6 +69,10 @@ export default function Profile() {
   /* ---------------- PROGRESS ACTIONS ---------------- */
   const handleExport = () => {
     exportProgress();
+    setImportStatus("✅ Progress exported!");
+    
+    // Trigger global success toast alert
+    showToast("Progress configuration data exported!", "success");
     showToast(t("profile.data.toast.exported"), "success");
     setImportStatus(t("profile.data.status.exported"));
     logActivity(ACTIVITY_TYPES.EXPORT, {}, t("profile.data.log.exported"));
@@ -79,21 +87,31 @@ export default function Profile() {
     try {
       const newState = await importProgress(file);
       setState(newState);
+      setImportStatus("✅ Progress imported successfully!");
       
+      // Trigger global success toast alert
+      showToast("Progress state imported successfully!", "success");
       showToast(t("profile.data.toast.imported"), "success");
       setImportStatus(t("profile.data.status.imported"));
       logActivity(ACTIVITY_TYPES.IMPORT, {}, t("profile.data.log.imported"));
     } catch {
+      setImportStatus("❌ Invalid file — could not import.");
+      showToast("Could not parse file. Verify structure format.", "error");
       showToast(t("profile.data.toast.importFailed"), "error");
       setImportStatus(t("profile.data.status.importFailed"));
     }
+
+    setTimeout(() => setImportStatus(""), 3000);
   };
 
   const handleReset = () => {
     if (window.confirm(t("profile.data.confirmReset"))) {
       const newState = resetProgress();
       setState(newState);
-
+      setImportStatus("🗑️ Progress reset.");
+      
+      // Trigger global warning toast alert
+      showToast("All missions, XP levels, and badges have been cleared.", "warning");
       showToast(t("profile.data.toast.resetDone"), "warning");
       setImportStatus(t("profile.data.status.resetDone"));
       setTimeout(() => setImportStatus(""), 3000);
@@ -118,7 +136,7 @@ export default function Profile() {
           <h1 className="profile-name">
             <span className="sr-only">Adventurer Name: </span>
             {profile.name}
-          </h1>
+          </h1> 
 
           <div className="profile-rank">
             <span className="sr-only">Rank Title: </span>
@@ -146,14 +164,11 @@ export default function Profile() {
 
           {/* ACTIONS */}
           <div className="flex gap-2 mt-3">
-
             <button type="button" className="btn btn-secondary" onClick={openEdit}>
               {t("profile.edit")}
             </button>
             <Link to="/journal" className="btn btn-ghost">
               {t("profile.viewJournal")}
-            </Link>
-
             </Link>
           </div>
         </div>
@@ -186,7 +201,6 @@ export default function Profile() {
 
       {/* EDIT PANEL */}
       {editing && (
-
         <div className="card mt-4" role="form" aria-labelledby="edit-profile-heading">
           <h3 id="edit-profile-heading" className="mb-3">{t("profile.editPanel.title")}</h3>
 
@@ -228,60 +242,13 @@ export default function Profile() {
             </div>
           </fieldset>
 
-
           {/* ACTIONS */}
           <div className="flex gap-2">
             <button type="button" className="btn btn-primary" onClick={saveUserProfile}>
-              Save Profile Changes
-=======
-          {/* NAME INPUT */}
-          <input
-            className="profile-input-full"
-            className="w-full p-2 mb-3 rounded"
-            style={{
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-primary)",
-            }}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("profile.editPanel.namePlaceholder")}
-          />
-
-          {/* AVATAR SELECTOR WITH NATIVE 6-COLUMN RESPONSIVE GRID */}
-          <div className="avatar-grid-6col">
-            {avatars.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() => setAvatar(a)}
-                className={`avatar-btn-node text-2xl ${
-                  avatar === a ? "active" : ""
-                }`}
-                className="text-2xl p-2 rounded transition"
-                style={{
-                  backgroundColor:
-                    avatar === a ? "var(--cyan-dim)" : "var(--bg-glass)",
-                  transform: avatar === a ? "scale(1.1)" : "none",
-                }}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-
-          {/* ACTION BUTTON CONTAINER */}
-          <div className="profile-flex-row">
-            <button className="btn btn-primary" onClick={saveUserProfile}>
               {t("common.save")}
             </button>
-
-            <button className="btn btn-ghost" onClick={() => setEditing(false)}>
-              {t("common.cancel")}
-            </button>
-
             <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
-              Cancel Changes
-
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -300,20 +267,17 @@ export default function Profile() {
               className={`profile-badge-card ${earned ? "earned" : "locked"}`}
               aria-label={`Badge record: ${badge.name}. Description: ${badge.description}. Status: ${earned ? 'Earned' : 'Locked'}`}
             >
-
-             <div className="profile-badge-icon" aria-hidden="true">{badge.icon}</div>
+              <div className="profile-badge-icon" aria-hidden="true">{badge.icon}</div>
               <div className="profile-badge-info" aria-hidden="true">
                 <h4>{t(`badges.${badge.id}.name`)}</h4>
                 <p>{t(`badges.${badge.id}.description`)}</p>
-
               </div>
             </div>
           );
         })}
       </div>
 
-
-      {/* MISSIONS */}
+      {/* COMPLETED MISSIONS LIST */}
       <h2 className="profile-section-title">{t("profile.sections.completedMissions")}</h2>
       <div className="flex flex-col gap-2" role="region" aria-label={t("profile.aria.completedListing")}>
         {completedMissions.length === 0 ? (
@@ -328,30 +292,11 @@ export default function Profile() {
         )}
       </div>
 
-      {/* DATA */}
+      {/* CONFIGURATION DATA MANAGEMENT */}
       <h2 className="profile-section-title">{t("profile.sections.data")}</h2>
-
-
-      {completedMissions.length === 0 ? (
-        <div className="card text-center p-6">{t("profile.noMissions")}</div>
-      ) : (
-        completedMissions.map((m) => (
-          <div key={m.id} className="card profile-space-between">
-            <span>{m.title}</span>
-            <span className="text-gold">+{m.xpReward} XP</span>
-          </div>
-        ))
-      )}
-
-
-            <div className="profile-actions">
-        <button className="btn btn-secondary" onClick={handleExport}>
-          {t("profile.data.export")}
-
       <div className="profile-actions" role="group" aria-label="Game progress backup controls">
         <button type="button" className="btn btn-secondary" onClick={handleExport}>
-          Export Progress File
-
+          {t("profile.data.export")}
         </button>
 
         <button
@@ -359,13 +304,11 @@ export default function Profile() {
           className="btn btn-secondary"
           onClick={() => fileInputRef.current?.click()}
         >
-
           {t("profile.data.import")}
         </button>
+        
         <button type="button" className="btn btn-ghost" style={{ color: "var(--red)" }} onClick={handleReset}>
           {t("profile.data.reset")}
-        </button>
-
         </button>
 
         <input
@@ -380,7 +323,7 @@ export default function Profile() {
       </div>
 
       {importStatus && (
-        <p className="mt-3 text-sm text-gray-400" role="status">{importStatus}</p>
+        <p className="mt-3 text-sm text-gray-400">{importStatus}</p>
       )}
     </div>
   );

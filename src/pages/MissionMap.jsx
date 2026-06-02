@@ -175,13 +175,11 @@ export default function MissionMap() {
                                         x={cx}
                                         y={cy + 4}
                                         textAnchor="middle"
-
-                                       dominantBaseline="middle"
+                                        dominantBaseline="middle"
                                         fill={mission.completed ? '#22c55e' : mission.unlocked ? '#06d6a0' : '#6b7280'}
                                         fontSize="14"
                                         fontWeight="bold"
                                         aria-hidden="true"
-
                                     >
                                         {mission.completed ? '✓' : mission.unlocked ? mission.order : '🔒'}
                                     </text>
@@ -192,8 +190,7 @@ export default function MissionMap() {
                                         fontSize="11"
                                         fill={mission.unlocked ? '#cbd5e1' : '#475569'}
                                         fontWeight="500"
-
-                                    fontFamily="Inter, sans-serif"
+                                        fontFamily="Inter, sans-serif"
                                         aria-hidden="true"
                                     >
                                         {shortTitle}
@@ -210,7 +207,6 @@ export default function MissionMap() {
                                     >
                                         {mission.completed ? 'COMPLETED' : `${mission.xpReward} XP`}
                                     </text>
- 
                                 </g>
                             </g>
                         );
@@ -233,7 +229,6 @@ export default function MissionMap() {
             </div>
 
             <div className="learning-path-mobile" aria-label={t('missionMap.aria.missionTimeline')}>
-
                 {filteredMissions.map((m, i) => (
                     <button
                         type="button"
@@ -241,9 +236,7 @@ export default function MissionMap() {
                         className={`timeline-item ${m.completed ? 'completed' : ''} ${!m.unlocked ? 'locked' : ''}`}
                         onClick={() => handleMissionClick(m)}
                         disabled={!m.unlocked}
-
                         aria-label={ariaLabelFor(m)}
-
                     >
                         <span className="timeline-track" aria-hidden="true">
                             <span className="timeline-node">
@@ -268,7 +261,6 @@ export default function MissionMap() {
             </div>
 
             {/* Mission Cards Grid */}
-
             <div className="mission-map-filters">
                 <div className="search-bar">
                     <input
@@ -325,11 +317,11 @@ export default function MissionMap() {
                     </div>
                 </div>
             </div>
+            
             <div className="mission-map-grid">
                 {filteredMissions.length === 0 ? (
                     <div className="no-missions-found" role="status">
                         <p>{t('missionMap.noResults')}</p>
-
                     </div>
                 ) : (
                     filteredMissions.map((m) => (
@@ -362,7 +354,6 @@ export default function MissionMap() {
                                     ))}
                                 </div>
                                 <span className={`badge badge-${m.difficulty}`}>
-
                                     <span className="sr-only">{t('missionMap.card.difficultyLabel')} </span>
                                     {t(`difficulty.${m.difficulty}`)}
                                 </span>
@@ -372,8 +363,6 @@ export default function MissionMap() {
                             )}
                             {!m.unlocked && (
                                 <div className="mission-card-status" style={{ color: 'var(--text-muted)' }}><span className="sr-only">{t('missionMap.card.stateLabel')} </span>{t('missionMap.card.locked')}</div>
-                            )}
-
                             )}
                         </div>
                     ))

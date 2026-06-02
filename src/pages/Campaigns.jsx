@@ -187,7 +187,7 @@ export default function Campaigns() {
                 {completed && (
                   <div className="campaign-status completed">
 
-                   <span className="sr-only">{t("campaigns.statusLabel")} </span>
+                    <span className="sr-only">{t("campaigns.statusLabel")} </span>
                     {t("campaigns.chapterComplete")}
 
                   </div>
@@ -266,7 +266,6 @@ export default function Campaigns() {
 
       {showLoreModal && selectedCampaign && (
         <div className="modal-overlay" onClick={closeModal}>
-
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
@@ -284,7 +283,6 @@ export default function Campaigns() {
               {t("campaigns.lore.beginChapter", {
                 number: selectedCampaign.chapterNumber,
               })}
-            </button>
             </button>
           </div>
         </div>
