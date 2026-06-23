@@ -23,7 +23,6 @@ test.describe('Mission Flow', () => {
     
     await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15000 });
     
-    // ✅ FIXED: Assert structural DOM delivery instead of strict viewport paint dimensions
     const runTestsBtn = page.locator('button:has-text("Run Tests")');
     await expect(runTestsBtn).toBeAttached({ timeout: 15000 });
   });
