@@ -166,6 +166,11 @@
     "subtitle": "Your journey through the Soroban realm, recorded for eternity.",
     "clearLog": "🗑️ Clear Log",
     "confirmClear": "Clear all activity history?",
+    "controlsLabel": "Journal search and filters",
+    "searchLabel": "Search journal entries",
+    "searchPlaceholder": "Search journal entries...",
+    "typeFilterLabel": "Filter by activity type",
+    "dateFilterLabel": "Filter by date",
     "summary": {
       "missions": "Missions",
       "badges": "Badges",
@@ -180,6 +185,12 @@
       "levelUp": "Level Up",
       "hint": "Hint",
       "system": "System"
+    },
+    "dateFilters": {
+      "all": "Any time",
+      "today": "Today",
+      "week": "Last 7 days",
+      "month": "This month"
     },
     "empty": "No activities recorded yet. Start your first mission!",
     "dates": {
