@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
@@ -32,7 +32,10 @@ export default function MissionDetail() {
   const { missionId } = useParams();
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const mission = getMissionById(missionId, language);
+  const mission = useMemo(
+    () => getMissionById(missionId, language),
+    [missionId, language],
+  );
 
   const toastContext = useToast();
   const showToast = toastContext?.showToast;
@@ -65,8 +68,14 @@ export default function MissionDetail() {
   const isCompleted = progressState.completedMissions.includes(missionId);
   const hasReplay = CodeRecorder.hasRecording(missionId);
 
-  const nextMissionItem = getNextMission(missionId, language);
-  const previousMissionItem = getMissionById(String(Number(missionId) - 1), language);
+  const nextMissionItem = useMemo(
+    () => getNextMission(missionId, language),
+    [missionId, language],
+  );
+  const previousMissionItem = useMemo(
+    () => getMissionById(String(Number(missionId) - 1), language),
+    [missionId, language],
+  );
 
   // --------------------------- Load Mission ---------------------------
   useEffect(() => {
