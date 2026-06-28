@@ -29,6 +29,8 @@
     "missions": "Misiones",
     "profile": "Perfil",
     "journal": "Diario",
+    "leaderboard": "Ranking",
+    "achievements": "Logros",
     "ariaMain": "Navegación principal",
     "ariaHome": "Ir a la página de inicio",
     "ariaMobile": "Menú de navegación móvil",
@@ -136,7 +138,17 @@
     "viewJournal": "📖 Ver diario",
     "editPanel": {
       "title": "Editar perfil",
+      "nameLabel": "Nombre del aventurero",
+      "avatarLegend": "Elige un avatar",
       "namePlaceholder": "Ingresa tu nombre"
+    },
+    "selector": {
+      "title": "Perfil activo",
+      "help": "{{count}} de {{max}} perfiles locales en uso.",
+      "meta": "Nivel {{level}} • {{xp}} XP",
+      "create": "Crear perfil",
+      "emptySlot": "Espacio vacío",
+      "defaultName": "Jugador {{number}}"
     },
     "stats": {
       "missions": "Misiones",
@@ -163,6 +175,12 @@
         "importFailed": "❌ Archivo inválido — no se pudo importar.",
         "resetDone": "🗑️ Progreso restablecido."
       },
+      "toast": {
+        "exported": "¡Progreso exportado!",
+        "imported": "¡Progreso importado correctamente!",
+        "importFailed": "No se pudo importar ese archivo.",
+        "resetDone": "Progreso restablecido."
+      },
       "log": {
         "exported": "Progreso de la aventura exportado",
         "imported": "Progreso de la aventura importado desde archivo"
@@ -174,6 +192,37 @@
         "resetDone": "🗑️ Progreso restablecido."
       }
     }
+  },
+  "leaderboard": {
+    "kicker": "Multijugador local",
+    "title": "Ranking",
+    "subtitle": "Compara XP, nivel, misiones e insignias entre tus perfiles locales.",
+    "manageProfiles": "Gestionar perfiles",
+    "championAria": "Campeón local actual",
+    "championSummary": "Nivel {{level}} • {{xp}} XP • {{missions}} misiones completadas",
+    "tableTitle": "Clasificación local",
+    "profileCount": "{{count}} perfiles",
+    "active": "Activo",
+    "switch": "Cambiar",
+    "columns": {
+      "rank": "Puesto",
+      "player": "Jugador",
+      "xp": "XP",
+      "level": "Nivel",
+      "missions": "Misiones",
+      "badges": "Insignias",
+      "status": "Estado"
+    }
+  },
+  "achievements": {
+    "kicker": "Bóveda de insignias",
+    "title": "Logros",
+    "subtitle": "Logros desbloqueados y bloqueados de {{name}}.",
+    "summaryAria": "Resumen de logros completados",
+    "unlocked": "Desbloqueados",
+    "progressAria": "Progreso de logros completados",
+    "progress": "Progreso",
+    "gridAria": "Colección de insignias de logros"
   },
   "journal": {
     "title": "Diario de aventura",

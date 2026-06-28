@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "./Profile.css";
 
@@ -28,8 +28,13 @@ export default function Profile() {
   const {
     progress: state,
     profile,
+    profiles,
+    activeProfileId,
+    maxProfiles,
     updateProgress,
     updateProfile,
+    switchProfile,
+    createProfile,
     resetProgress,
   } = useGameState();
 
@@ -39,6 +44,11 @@ export default function Profile() {
 
   const [importStatus, setImportStatus] = useState("");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setName(profile.name || "");
+    setAvatar(profile.avatar || "🛡️");
+  }, [profile]);
 
   const xpProgress = getXPProgress(state);
   const rankIndex = Math.min(Math.max(state.level - 1, 0), MAX_RANK_INDEX);
@@ -62,6 +72,15 @@ export default function Profile() {
   const openEdit = () => {
     setName(profile.name);
     setAvatar(profile.avatar);
+    setEditing(true);
+  };
+
+  const handleCreateProfile = () => {
+    const nextNumber = profiles.length + 1;
+    createProfile({
+      name: t("profile.selector.defaultName", { number: nextNumber }),
+      avatar: avatars[(nextNumber - 1) % avatars.length],
+    });
     setEditing(true);
   };
 
@@ -127,6 +146,58 @@ export default function Profile() {
 
   return (
     <div id="main-content" className="profile-page">
+      <section className="profile-selector-panel" aria-labelledby="profile-selector-heading">
+        <div>
+          <h2 id="profile-selector-heading" className="profile-section-title">
+            {t("profile.selector.title")}
+          </h2>
+          <p className="profile-selector-help">
+            {t("profile.selector.help", {
+              count: profiles.length,
+              max: maxProfiles,
+            })}
+          </p>
+        </div>
+
+        <div className="profile-selector-grid">
+          {profiles.map((slot) => {
+            const isActive = slot.id === activeProfileId;
+            return (
+              <button
+                key={slot.id}
+                type="button"
+                className={`profile-selector-card ${isActive ? "active" : ""}`}
+                onClick={() => switchProfile(slot.id)}
+                aria-pressed={isActive}
+              >
+                <span className="profile-selector-avatar" aria-hidden="true">
+                  {slot.profile.avatar}
+                </span>
+                <span className="profile-selector-name">{slot.profile.name}</span>
+                <span className="profile-selector-meta">
+                  {t("profile.selector.meta", {
+                    level: slot.progress.level,
+                    xp: slot.progress.xp,
+                  })}
+                </span>
+              </button>
+            );
+          })}
+
+          {profiles.length < maxProfiles && (
+            <button
+              type="button"
+              className="profile-selector-card create"
+              onClick={handleCreateProfile}
+            >
+              <span className="profile-selector-avatar" aria-hidden="true">+</span>
+              <span className="profile-selector-name">{t("profile.selector.create")}</span>
+              <span className="profile-selector-meta">{t("profile.selector.emptySlot")}</span>
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* HEADER */}
       <div className="profile-header">
         {/* AVATAR */}
